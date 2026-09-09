@@ -1,0 +1,983 @@
+/* =====================================================
+   RESET & BASE
+   ===================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body, h1, h2, h3, p, ul {
+  margin: 0;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font: inherit;
+}
+
+/* =====================================================
+   FONTS
+   Self-hosted variable font (Thin–Black in one file). WOFF loads
+   first for its smaller size; the TTF is a fallback for the rare
+   browser that can't use WOFF. font-weight: 100 900 tells the
+   browser this file covers the whole range, so any weight used
+   below (400/600/700) resolves correctly from this one @font-face.
+   ===================================================== */
+@font-face {
+  font-family: "League Spartan";
+  src: url("fonts/LeagueSpartan-VariableFont_wght.woff") format("woff"),
+       url("fonts/LeagueSpartan-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =====================================================
+   DESIGN TOKENS
+   Placeholder colors — swap these once we translate your mockups'
+   final palette.
+   ===================================================== */
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-muted: #6b6b6b;
+  --color-accent: #2f6fed;
+  --color-border: #e5e5e5;
+  --color-surface: #f0f0f0;
+
+  --font-body: "League Spartan", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "League Spartan", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --container-width: 1100px;
+  --spacing-section: 5rem;
+}
+
+/* Dark theme — applied when JS sets data-theme="dark" on <html>.
+   Only the tokens that need to change are redeclared; --color-accent
+   and everything else fall through from the :root block above. */
+:root[data-theme="dark"] {
+  --color-bg: #121212;
+  --color-text: #f0f0f0;
+  --color-muted: #a3a3a3;
+  --color-border: #2e2e2e;
+  --color-surface: #1e1e1e;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+  overflow-anchor: none;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+.container {
+  max-width: var(--container-width);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* =====================================================
+   HEADER / NAV
+   ===================================================== */
+.site-header {
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nav-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 1.25rem;
+}
+
+.logo {
+  font-weight: 700;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.main-nav ul {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.theme-toggle .icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Light mode shows a moon (click to go dark); dark mode shows a sun. */
+.theme-toggle .icon-sun {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* =====================================================
+   IMAGE FALLBACK
+   Used anywhere a project image is inserted by JS (site.js's
+   createProjectImage). Shows a labeled placeholder until a real
+   file exists at that path, instead of a broken image icon.
+   ===================================================== */
+.img-wrapper {
+  overflow: hidden;
+}
+
+.img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.img-wrapper.img-missing {
+  background: var(--color-surface);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 600;
+  padding: 1rem;
+}
+
+/* =====================================================
+   LANDING PAGE / CAROUSEL
+   ===================================================== */
+.landing {
+  position: relative;
+  min-height: calc(100vh - 73px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-backdrop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: url(#chromatic-aberration);
+  transition: opacity 1.2s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pan-horizontal {
+    from { object-position: 0% 50%; }
+    to { object-position: 100% 50%; }
+  }
+
+  @keyframes pan-vertical {
+    from { object-position: 50% 0%; }
+    to { object-position: 50% 100%; }
+  }
+
+  .hero-backdrop img.pan-horizontal {
+    animation: pan-horizontal 24s ease-in-out forwards;
+  }
+
+  .hero-backdrop img.pan-vertical {
+    animation: pan-vertical 24s ease-in-out forwards;
+  }
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  text-align: center;
+  padding-block: 3rem;
+}
+
+.landing-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 3rem;
+  transition: opacity 0.25s ease;
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-inline: 3rem;
+}
+
+.carousel-track {
+  position: relative;
+  width: min(800px, 80vw);
+  height: 680px;
+  --card-width: 340px;
+  --card-height: 495px;
+}
+
+.carousel-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
+}
+
+.carousel-card-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.carousel-arrow {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.view-project-btn {
+  margin-top: 2.5rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 0.75rem 2.25rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.view-project-btn:hover {
+  background: var(--color-surface);
+  border-color: var(--color-text);
+}
+
+/* =====================================================
+   SECTION SPACING
+   A top border appears between two stacked sections, but
+   never before the first one on a page.
+   ===================================================== */
+main section {
+  padding-block: var(--spacing-section);
+}
+
+main section + section {
+  border-top: 1px solid var(--color-border);
+}
+
+/* =====================================================
+   ABOUT
+   ===================================================== */
+.about-content {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.about-photo {
+  aspect-ratio: 1;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+
+/* =====================================================
+   CONTACT
+   ===================================================== */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-block: 2rem;
+}
+
+.contact-form label {
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font: inherit;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.contact-form button {
+  margin-top: 1rem;
+  align-self: flex-start;
+}
+
+.form-status {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.social-links {
+  display: flex;
+  gap: 1.5rem;
+  font-weight: 600;
+}
+
+/* =====================================================
+   PROJECT DETAIL PAGE
+   ===================================================== */
+.project-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.project-heading {
+  position: absolute;
+  top: 2rem;
+  left: 1.5rem;
+  z-index: 2;
+  color: #f0f0f0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: rgba(240, 240, 240, 0.85);
+  font-weight: 600;
+}
+
+#project-title {
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  color: #ffffff;
+}
+
+.render-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* ---------- Render picker (floats over the left side) ---------- */
+.render-thumb-column {
+  position: absolute;
+  top: 50%;
+  left: 1.5rem;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  height: min(520px, 80%);
+}
+
+.render-thumb-track {
+  position: relative;
+  flex: 1;
+  width: 100%;
+}
+
+.render-thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 140px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
+}
+
+.render-thumb-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+/* The selected thumbnail drops the edge fade (full clarity) and
+   gets a thin ring instead, so it reads clearly as "this one" in
+   both the desktop coverflow and the mobile strip. */
+.render-thumb.selected {
+  -webkit-mask-image: none;
+  mask-image: none;
+  outline: 2px solid rgba(240, 240, 240, 0.85);
+  outline-offset: 3px;
+}
+
+/* ---------- Main render (fills the entire stage) ---------- */
+.render-viewer {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-bg);
+  cursor: pointer; /* hints that clicking the render expands it */
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, black 8%, black 92%, transparent),
+    linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, black 8%, black 92%, transparent),
+    linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+  mask-composite: intersect;
+}
+
+.render-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(30px) brightness(0.735);
+  transform: scale(1.2); /* avoids visible blur edges */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.render-backdrop.active {
+  opacity: 1;
+}
+
+.render-main-image {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.render-viewer.img-missing {
+  background: var(--color-surface);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ---------- Fullscreen render view ---------- */
+/* Clicking the render (see project.js) adds .image-expanded to
+   <body>. The viewer itself breaks out to fill the real browser
+   viewport instead of just the stage, and everything else on the
+   page — thumbnails included, per the brief — hides until it's
+   dismissed. */
+body.image-expanded {
+  overflow: hidden; /* no page scroll behind the expanded image */
+}
+
+body.image-expanded .site-header,
+body.image-expanded .site-footer,
+body.image-expanded .project-heading,
+body.image-expanded .render-thumb-column,
+body.image-expanded .info-toggle {
+  display: none;
+}
+
+body.image-expanded .render-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  border-radius: 0;
+  background: #000000;
+  cursor: zoom-in; /* fit-width is off — clicking the image fits it to width */
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* "Fit width" mode: the render fills the screen's width and scrolls
+   vertically for its full height, instead of shrinking to fit
+   entirely on screen at once. Only meaningful while already expanded. */
+body.image-expanded.fit-width .render-viewer {
+  cursor: zoom-out; /* clicking the image now shows the entire render again */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body.image-expanded.fit-width .render-backdrop {
+  display: none; /* no letterboxing left to fill once the image just scrolls */
+}
+
+body.image-expanded.fit-width .render-main-image {
+  width: 100%;
+  height: auto;
+  object-fit: unset;
+  display: block;
+}
+
+.viewer-controls {
+  display: none;
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1001;
+  gap: 0.75rem;
+}
+
+body.image-expanded .viewer-controls {
+  display: flex;
+}
+
+.viewer-controls button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.viewer-controls .icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Active state — same "inverted" treatment as the other toggles on
+   this page, so it reads clearly as currently on. */
+.viewer-fit-toggle.active {
+  background: rgba(240, 240, 240, 0.9);
+  color: #111111;
+}
+
+/* ---------- Magnifier ---------- */
+/* Hides the system cursor over the image while magnifier mode is
+   on — the lens itself becomes the pointer. */
+.render-viewer.magnifier-active {
+  cursor: zoom-in;
+}
+
+.magnifier-toggle {
+  position: absolute;
+  top: calc(50% - 52px);
+  right: 1.5rem;
+  transform: translateY(-50%);
+  z-index: 3;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f0f0f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.magnifier-toggle .icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* On state — same idea as a pressed toggle button: inverted so it
+   reads clearly as "currently active" at a glance. */
+.magnifier-toggle.active {
+  background: rgba(240, 240, 240, 0.9);
+  color: #111111;
+}
+
+/* While fullscreen, this becomes a normal flex child of
+   .viewer-controls — like its two siblings — instead of an
+   absolutely positioned element. The old approach tried to place it
+   with manual top/right offsets, but those were being measured
+   against .viewer-controls's own small box (its actual parent, now
+   that it's nested inside it), not the viewport — which is why it
+   was landing lower and further left than the other two buttons.
+   Letting flexbox handle the alignment sidesteps that miscalculation
+   entirely. */
+body.image-expanded .magnifier-toggle {
+  position: static;
+  transform: none;
+}
+
+/* The floating lens. Positioned via project.js (left/top follow the
+   cursor); everything else — size, soft edge, border — lives here. */
+.magnifier-lens {
+  position: fixed;
+  z-index: 1002; /* above the fullscreen viewer (1000) and its controls (1001) */
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  background-repeat: no-repeat;
+  pointer-events: none; /* never intercepts clicks/hover itself */
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  /* Soft, feathered edge instead of a hard-edged circle */
+  -webkit-mask-image: radial-gradient(circle, black 62%, transparent 100%);
+  mask-image: radial-gradient(circle, black 62%, transparent 100%);
+}
+
+.magnifier-lens.visible {
+  opacity: 1;
+}
+
+/* Thin crosshair marking the exact center of the lens — a small
+   drop-shadow keeps it visible over both light and dark image areas. */
+.magnifier-lens::before,
+.magnifier-lens::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
+.magnifier-lens::before {
+  width: 14px;
+  height: 1px;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-lens::after {
+  width: 1px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+}
+
+/* ---------- Text panels (hover to reveal, click to lock) ---------- */
+.info-toggle {
+  position: absolute;
+  top: 50%;
+  right: 1.5rem;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.info-handle {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f0f0f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-handle .icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.project-panels {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f0f0f0;
+  transition: max-width 0.3s ease, opacity 0.25s ease;
+}
+
+/* Hovering the handle (or the panel itself, once it's open) reveals
+   it; the "locked" class (added by a click, see project.js) keeps
+   it open without needing the mouse to stay there. */
+.info-toggle:hover .project-panels,
+.info-toggle.locked .project-panels {
+  max-width: 320px;
+  opacity: 1;
+}
+
+.project-panels-inner {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.story-panel h2,
+.description-panel h2 {
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.story-panel {
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.story-panel p,
+.description-panel p {
+  color: rgba(240, 240, 240, 0.8);
+}
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  padding-block: 2rem;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+@media (max-width: 700px) {
+  .about-content {
+    grid-template-columns: 1fr;
+  }
+
+  .render-stage {
+    display: flex;
+    flex-direction: column;
+    position: static;
+    flex: none;
+  }
+
+  .render-thumb-column {
+    position: static;
+    transform: none;
+    height: auto;
+    width: 100%;
+    order: 2; /* thumbnails below the main image on small screens */
+  }
+
+  .render-thumb-column .carousel-arrow {
+    display: none; /* up/down arrows don't read well next to a horizontal strip */
+  }
+
+  .magnifier-toggle,
+  .magnifier-lens {
+    display: none; /* hover-tracking has no touch equivalent */
+  }
+
+  .render-thumb-track {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow-x: auto;
+    height: 140px;
+    padding-inline: 0.25rem;
+  }
+
+  .render-thumb {
+    position: static;
+    flex-shrink: 0;
+    width: 90px;
+    height: 120px;
+    opacity: 0.5;
+    transform: none;
+  }
+
+  .render-thumb.selected {
+    opacity: 1;
+  }
+
+  .project-heading {
+    position: static;
+    padding-inline: 1.5rem;
+    padding-top: 2rem;
+    color: var(--color-text);
+    text-shadow: none;
+    order: 0;
+  }
+
+  .back-link {
+    color: var(--color-muted);
+  }
+
+  #project-title {
+    color: inherit;
+  }
+
+  .render-viewer {
+    position: relative;
+    inset: auto;
+    order: 1;
+    height: 320px;
+  }
+
+  .info-toggle {
+    position: static;
+    transform: none;
+    order: 3;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .info-handle {
+    display: none; /* hover has no equivalent on touch, so always show the panel instead */
+  }
+
+  .project-panels {
+    max-width: none;
+    opacity: 1;
+    overflow: visible;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: var(--color-text);
+  }
+
+  .project-panels-inner {
+    width: 100%;
+    padding: 1.5rem;
+  }
+
+  .story-panel h2,
+  .description-panel h2 {
+    color: var(--color-text);
+  }
+
+  .story-panel p,
+  .description-panel p {
+    color: var(--color-muted);
+  }
+
+  .carousel {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .carousel-track {
+    width: 90vw;
+    --card-width: 235px;
+    --card-height: 350px;
+  }
+
+  .carousel-card {
+    width: var(--card-width);
+    height: var(--card-height);
+  }
+}

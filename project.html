@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project | Your Name</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="style.css?v=28">
+</head>
+<body>
+
+  <!-- ===== HEADER / NAVIGATION ===== -->
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo">Your Name</a>
+
+      <div class="nav-right">
+        <nav class="main-nav">
+          <ul>
+            <li><a href="about.html">About</a></li>
+          </ul>
+        </nav>
+
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+          <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== PROJECT DETAIL =====
+       One template, reused for every project. Which project shows
+       is decided by the ?id=... in the URL (see project.js). The
+       carousel and index pages link here with the right id already
+       attached, e.g. project.html?id=project-two -->
+  <main class="project-detail">
+    <!-- render-stage: the viewer fills 100% of the screen, everything
+         else — heading included — is layered on top of it rather
+         than sharing space with it. (Overlaid elements will get a
+         show/hide control later.) -->
+    <div class="render-stage">
+      <!-- The selected render, filling the entire stage. Click (or
+           Enter/Space) toggles it to fill the whole browser window —
+           see project.js. -->
+      <div class="render-viewer" id="render-viewer" role="button" tabindex="0" aria-pressed="false" aria-label="Expand render to fill the screen"></div>
+
+      <!-- Only shown while the render is expanded (see style.css) -->
+      <button class="magnifier-toggle" id="magnifier-toggle" type="button" aria-pressed="false" aria-label="Turn on the image magnifier">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+
+      <div class="viewer-controls">
+        <button class="viewer-fit-toggle" id="viewer-fit-toggle" type="button" aria-pressed="false" aria-label="Fit render to screen width">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"></path>
+          </svg>
+        </button>
+        <button class="viewer-close" id="viewer-close" type="button" aria-label="Exit fullscreen view">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
+      </div>
+      <!-- Lens itself is a single reused element, shown/positioned by
+           project.js while magnifier mode is on. -->
+      <div class="magnifier-lens" id="magnifier-lens" aria-hidden="true"></div>
+
+      <!-- Heading, floating over the top-left corner of the image -->
+      <div class="project-heading">
+        <a href="index.html" class="back-link">&larr; Back to all projects</a>
+        <h1 id="project-title">Project Name</h1>
+      </div>
+
+      <!-- Render picker, floating over the left side of the image -->
+      <div class="render-thumb-column">
+        <button class="carousel-arrow" id="render-prev" aria-label="Previous render">&uarr;</button>
+        <div class="render-thumb-track" id="render-thumb-track"></div>
+        <button class="carousel-arrow" id="render-next" aria-label="Next render">&darr;</button>
+      </div>
+
+      <!-- Text panels: collapsed by default, revealed by hovering the
+           handle, and kept open by clicking it (see project.js) -->
+      <div class="info-toggle" id="info-toggle">
+        <button class="info-handle" id="info-handle" type="button" aria-expanded="false" aria-label="Show project info">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <line x1="12" y1="11" x2="12" y2="16"></line>
+            <line x1="12" y1="7.5" x2="12" y2="7.5"></line>
+          </svg>
+        </button>
+
+        <div class="project-panels" id="project-panels">
+          <div class="project-panels-inner">
+            <div class="story-panel">
+              <h2>Story</h2>
+              <p id="story-text"></p>
+            </div>
+
+            <div class="description-panel">
+              <h2>About this render</h2>
+              <p id="render-description"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="year"></span> Your Name. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="data.js?v=2"></script>
+  <script src="site.js?v=2"></script>
+  <script src="project.js?v=14"></script>
+</body>
+</html>
