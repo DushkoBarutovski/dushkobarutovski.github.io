@@ -2,17 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Project | Your Name</title>
   <meta name="color-scheme" content="light dark">
-  <link rel="stylesheet" href="style.css?v=28">
+  <!-- Remove this line when you take the password gate off — it
+       stops search engines from indexing the site while it's
+       gated. See password-gate.js for the gate itself. -->
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Sets the theme here, before the stylesheet loads, so dark
+       mode (this site's default) doesn't flash in as light for a
+       moment first. site.js still owns the full theme logic (the
+       toggle button, its aria state, storing changes when clicked)
+       once the page finishes loading — this is just the one piece
+       of it that has to happen this early to avoid the flash. -->
+  <script>
+    try {
+      if (localStorage.getItem('theme') !== 'light') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
+  <link rel="stylesheet" href="style.css?v=33">
 </head>
-<body>
+<body class="gate-locked">
+
+  <!-- ===== TEMPORARY PASSWORD GATE =====
+       A soft, client-side visitor gate — see password-gate.js for
+       how it works and how to turn it off yourself. Not real
+       security (this is a static site, so the real page always
+       ships to the browser either way) — just keeps the site from
+       being stumbled on or shared before it's ready. -->
+  <div id="password-gate">
+    <form id="password-gate-form" class="password-gate-form">
+      <label for="password-gate-input">This site is a work in progress — enter the password to continue.</label>
+      <input type="password" id="password-gate-input" name="password" autocomplete="current-password" required>
+      <button type="submit" class="btn btn-primary">Enter</button>
+      <p id="password-gate-error" class="password-gate-error" role="alert"></p>
+    </form>
+  </div>
+  <script src="password-gate.js?v=1"></script>
 
   <!-- ===== HEADER / NAVIGATION ===== -->
   <header class="site-header">
     <div class="container nav-wrapper">
-      <a href="index.html" class="logo">Your Name</a>
+      <a href="index.html" class="logo">dushko.art</a>
 
       <div class="nav-right">
         <nav class="main-nav">
@@ -48,7 +81,24 @@
       <!-- The selected render, filling the entire stage. Click (or
            Enter/Space) toggles it to fill the whole browser window —
            see project.js. -->
-      <div class="render-viewer" id="render-viewer" role="button" tabindex="0" aria-pressed="false" aria-label="Expand render to fill the screen"></div>
+      <div class="render-viewer" id="render-viewer" role="button" tabindex="0" aria-pressed="false" aria-label="Expand render to fill the screen">
+        <!-- Sequence position within the current project's renders —
+             purely informational; navigation stays with the
+             thumbnails, arrows, and keyboard. Lives here (a static
+             child, not rebuilt with the backdrop/image on every
+             render change — see showRender in project.js) so the
+             marker can transition smoothly, and so it automatically
+             follows this element's own layout on both desktop and
+             mobile with no separate positioning rules needed. -->
+        <div class="render-progress" id="render-progress" aria-hidden="true">
+          <span class="render-progress-start" id="render-progress-start">01</span>
+          <div class="render-progress-track">
+            <div class="render-progress-fill" id="render-progress-fill"></div>
+            <div class="render-progress-marker" id="render-progress-marker"></div>
+          </div>
+          <span class="render-progress-end" id="render-progress-end">01</span>
+        </div>
+      </div>
 
       <!-- Only shown while the render is expanded (see style.css) -->
       <button class="magnifier-toggle" id="magnifier-toggle" type="button" aria-pressed="false" aria-label="Turn on the image magnifier">
@@ -84,7 +134,13 @@
       <!-- Render picker, floating over the left side of the image -->
       <div class="render-thumb-column">
         <button class="carousel-arrow" id="render-prev" aria-label="Previous render">&uarr;</button>
-        <div class="render-thumb-track" id="render-thumb-track"></div>
+        <!-- Bounded viewport: only ever holds a small fixed-size window
+             of thumbnails (see getThumbWindow in project.js) and clips
+             anything outside its own bounds, so a project with many
+             renders can never push the stack under the header/footer. -->
+        <div class="render-thumb-viewport" id="render-thumb-viewport">
+          <div class="render-thumb-track" id="render-thumb-track"></div>
+        </div>
         <button class="carousel-arrow" id="render-next" aria-label="Next render">&darr;</button>
       </div>
 
@@ -118,13 +174,14 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="site-footer">
-    <div class="container">
-      <p>&copy; <span id="year"></span> Your Name. All rights reserved.</p>
+    <div class="container footer-inner">
+      <p>&copy; <span id="year"></span> Dushko Barutovski. All rights reserved.</p>
+      <div class="footer-social" id="footer-social"></div>
     </div>
   </footer>
 
-  <script src="data.js?v=2"></script>
-  <script src="site.js?v=2"></script>
+  <script src="data.js?v=3"></script>
+  <script src="site.js?v=3"></script>
   <script src="project.js?v=14"></script>
 </body>
 </html>

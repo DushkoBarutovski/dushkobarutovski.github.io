@@ -69,6 +69,32 @@ function getCircularOffset(index, selectedIndex, total) {
   return offset;
 }
 
+// ---------- Footer social icons ----------
+// Renders one icon link per entry in SOCIAL_LINKS (data.js) into
+// #footer-social, wherever it exists on the current page. To add,
+// remove, or edit a link, edit that array — nothing here needs to
+// change. Guarded so pages that don't load data.js (there aren't
+// any right now, but just in case) don't error out.
+const footerSocialEl = document.getElementById('footer-social');
+if (footerSocialEl && typeof SOCIAL_LINKS !== 'undefined') {
+  SOCIAL_LINKS.forEach((social) => {
+    const link = document.createElement('a');
+    link.href = social.url;
+    link.setAttribute('aria-label', social.label);
+    link.title = social.label;
+
+    // Real external links open in a new tab; mailto: links and
+    // placeholder "#" hrefs don't need that.
+    if (/^https?:\/\//.test(social.url)) {
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
+
+    link.innerHTML = social.icon;
+    footerSocialEl.appendChild(link);
+  });
+}
+
 // ---------- Image with a graceful fallback ----------
 // If an image file doesn't exist yet, this shows a plain labeled
 // placeholder instead of a broken image icon. Once a real file

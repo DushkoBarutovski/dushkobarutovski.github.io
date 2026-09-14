@@ -15,25 +15,36 @@ const titleEl = document.getElementById('project-title');
 const storyText = document.getElementById('story-text');
 const descriptionText = document.getElementById('render-description');
 const viewerEl = document.getElementById('render-viewer');
+const progressStart = document.getElementById('render-progress-start');
+const progressEnd = document.getElementById('render-progress-end');
+const progressFill = document.getElementById('render-progress-fill');
+const progressMarker = document.getElementById('render-progress-marker');
 const thumbTrack = document.getElementById('render-thumb-track');
+const thumbViewport = document.getElementById('render-thumb-viewport');
 const prevBtn = document.getElementById('render-prev');
 const nextBtn = document.getElementById('render-next');
 
 const mobileQuery = window.matchMedia('(max-width: 700px)');
 
 function init() {
-  document.title = `${project.name} | Your Name`;
+  document.title = `${project.name} | Dushko Barutovski`;
   titleEl.textContent = project.name;
   storyText.textContent = project.story;
   showRender(0);
 }
 
 function showRender(index) {
-  renderIndex = (index + project.renders.length) % project.renders.length;
+  const total = project.renders.length;
+  renderIndex = ((index % total) + total) % total;
   const render = project.renders[renderIndex];
 
   viewerEl.classList.remove('img-missing');
-  viewerEl.innerHTML = '';
+  // Only the previous backdrop/image (or missing-render label) are
+  // cleared here — #render-progress is a static child of this same
+  // element (see project.html) that persists across renders so its
+  // marker can transition smoothly instead of popping to a new
+  // position every time.
+  viewerEl.querySelectorAll('.render-backdrop, .render-main-image, .render-missing-label').forEach((el) => el.remove());
 
   // A blurred copy of the same image fills the space around a
   // portrait render instead of leaving plain white on the sides —
@@ -54,7 +65,12 @@ function showRender(index) {
 
   img.addEventListener('error', () => {
     viewerEl.classList.add('img-missing');
-    viewerEl.textContent = `${project.name} — render ${renderIndex + 1}`;
+    renderBackdrop.remove();
+    img.remove();
+    const missingLabel = document.createElement('span');
+    missingLabel.className = 'render-missing-label';
+    missingLabel.textContent = `${project.name} — render ${renderIndex + 1}`;
+    viewerEl.appendChild(missingLabel);
   });
 
   viewerEl.appendChild(renderBackdrop);
@@ -62,28 +78,84 @@ function showRender(index) {
 
   descriptionText.textContent = render.description;
   renderThumbnails();
+  updateProgressIndicator();
 }
 
+// Zero-pads a 1-based render number for the indicator's labels.
+function padIndex(n) {
+  return String(n).padStart(2, '0');
+}
+
+// Purely visual readout of where the current render sits within
+// project.renders — reads the same renderIndex/project.renders that
+// drive everything else (thumbnails, arrows, keyboard), so it can't
+// drift out of sync with them; there's no separate index state here.
+function updateProgressIndicator() {
+  const total = project.renders.length;
+  progressStart.textContent = padIndex(renderIndex + 1);
+  progressEnd.textContent = padIndex(total);
+
+  // Guards the total === 1 case (would otherwise divide by zero) by
+  // just pinning the marker to the start — there's nowhere else for
+  // a single render to sit.
+  const fraction = total > 1 ? renderIndex / (total - 1) : 0;
+  const percent = `${fraction * 100}%`;
+  progressFill.style.width = percent;
+  progressMarker.style.left = percent;
+}
+
+// How many thumbnail slots the desktop picker shows at once — a
+// small, fixed amount, independent of how many renders the project
+// actually has.
+const VISIBLE_THUMB_COUNT = 7;
+const THUMB_WINDOW_HALF = Math.floor(VISIBLE_THUMB_COUNT / 2);
+
 // Renders the picker on the left. On desktop this is a vertical
-// coverflow — same idea as the landing page carousel, but running up
-// and down: the selected render centers, everything else fades and
-// shrinks with distance. That effect doesn't translate well to a
-// horizontal strip on narrow screens, so mobile falls back to a plain
-// scrollable row of evenly-sized thumbnails instead.
+// coverflow — same idea as the landing page carousel (and reusing
+// its circular-distance math, getCircularOffset in site.js), but
+// running up and down: the selected render always centers, and
+// wraps seamlessly past either end since navigation itself does
+// (see showRender). Only renders within THUMB_WINDOW_HALF steps of
+// the selected one (at most 5, fewer if the project has fewer
+// renders than that) are ever built here, so a project with many
+// renders still can't push the stack past its allotted height. That
+// windowing doesn't apply on narrow screens: mobile falls back to a
+// plain scrollable row of every render, sized evenly.
 function renderThumbnails() {
   thumbTrack.innerHTML = '';
   const isMobile = mobileQuery.matches;
+  const total = project.renders.length;
 
-  project.renders.forEach((render, index) => {
+  thumbViewport.classList.remove('has-more');
+
+  let visible = project.renders.map((render, index) => ({ render, index }));
+
+  if (!isMobile) {
+    visible = visible.filter(
+      ({ index }) => Math.abs(getCircularOffset(index, renderIndex, total)) <= THUMB_WINDOW_HALF
+    );
+
+    if (visible.length < total) {
+      thumbViewport.classList.add('has-more');
+    }
+  }
+
+  visible.forEach(({ render, index }) => {
     const thumb = document.createElement('div');
     thumb.className = 'render-thumb';
-    thumb.appendChild(createProjectImage(render.image, `${project.name} — render ${index + 1}`, 'render-thumb-image'));
+    // A render can optionally set `poster` — a static image shown here
+    // instead of `image`. There's no way to tell a GIF's <img> to not
+    // animate, so this is how an animated render (see showRender,
+    // which always uses the real `image`) gets a still thumbnail
+    // instead of every thumbnail in the stack playing at once. Renders
+    // without a poster just use their own image, exactly as before.
+    thumb.appendChild(createProjectImage(render.poster || render.image, `${project.name} — render ${index + 1}`, 'render-thumb-image'));
     thumb.addEventListener('click', () => showRender(index));
 
     if (isMobile) {
       thumb.classList.toggle('selected', index === renderIndex);
     } else {
-      const offset = getCircularOffset(index, renderIndex, project.renders.length);
+      const offset = getCircularOffset(index, renderIndex, total);
       const isSelected = offset === 0;
       const translateY = offset * 90;
       const scale = isSelected ? 1 : Math.max(0.7, 1 - Math.abs(offset) * 0.15);
@@ -99,23 +171,43 @@ function renderThumbnails() {
   });
 }
 
-// Re-render if the window crosses the mobile breakpoint, so switching
-// from the coverflow to the strip (or back) doesn't need a reload.
-mobileQuery.addEventListener('change', renderThumbnails);
-
-prevBtn.addEventListener('click', () => showRender(renderIndex - 1));
-nextBtn.addEventListener('click', () => showRender(renderIndex + 1));
-
+// =====================================================
+// Keyboard navigation
+// Arrow Up / Arrow Down navigate between renders.
+// Backspace goes back to the previous browser page.
+// =====================================================
 document.addEventListener('keydown', (event) => {
+  // Arrow Up → previous render
   if (event.key === 'ArrowUp') {
     event.preventDefault(); // stop the page from scrolling too
     showRender(renderIndex - 1);
+    return;
   }
+
+  // Arrow Down → next render
   if (event.key === 'ArrowDown') {
     event.preventDefault();
     showRender(renderIndex + 1);
+    return;
+  }
+
+  // Backspace → previous browser page
+  if (event.key === 'Backspace') {
+    // Don't interfere with typing in inputs, textareas, selects, etc.
+    const tag = document.activeElement?.tagName;
+    const isTyping =
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      document.activeElement?.isContentEditable;
+
+    if (isTyping) return;
+
+    event.preventDefault();
+    window.history.back();
   }
 });
+
 
 // =====================================================
 // Info panel (Story / About this render)

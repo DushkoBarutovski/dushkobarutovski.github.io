@@ -2,18 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Name | Portfolio</title>
   <meta name="description" content="Portfolio website of Your Name.">
   <meta name="color-scheme" content="light dark">
-  <link rel="stylesheet" href="style.css?v=28">
+  <!-- Remove this line when you take the password gate off — it
+       stops search engines from indexing the site while it's
+       gated. See password-gate.js for the gate itself. -->
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Sets the theme here, before the stylesheet loads, so dark
+       mode (this site's default) doesn't flash in as light for a
+       moment first. site.js still owns the full theme logic (the
+       toggle button, its aria state, storing changes when clicked)
+       once the page finishes loading — this is just the one piece
+       of it that has to happen this early to avoid the flash. -->
+  <script>
+    try {
+      if (localStorage.getItem('theme') !== 'light') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
+  <link rel="stylesheet" href="style.css?v=33">
 </head>
-<body>
+<body class="gate-locked">
+
+  <!-- ===== TEMPORARY PASSWORD GATE =====
+       A soft, client-side visitor gate — see password-gate.js for
+       how it works and how to turn it off yourself. Not real
+       security (this is a static site, so the real page always
+       ships to the browser either way) — just keeps the site from
+       being stumbled on or shared before it's ready. -->
+  <div id="password-gate">
+    <form id="password-gate-form" class="password-gate-form">
+      <label for="password-gate-input">This site is a work in progress — enter the password to continue.</label>
+      <input type="password" id="password-gate-input" name="password" autocomplete="current-password" required>
+      <button type="submit" class="btn btn-primary">Enter</button>
+      <p id="password-gate-error" class="password-gate-error" role="alert"></p>
+    </form>
+  </div>
+  <script src="password-gate.js?v=1"></script>
 
   <!-- ===== HEADER / NAVIGATION ===== -->
   <header class="site-header">
     <div class="container nav-wrapper">
-      <a href="index.html" class="logo">Your Name</a>
+      <a href="index.html" class="logo">dushko.art</a>
 
       <div class="nav-right">
         <nav class="main-nav">
@@ -39,7 +72,13 @@
        Hidden and zero-size — it exists only so CSS can reference it
        via filter: url(#chromatic-aberration). Splitting into actual
        color channels needs an SVG filter; plain CSS filters (blur,
-       hue-rotate, etc.) can't isolate one channel from another. -->
+       hue-rotate, etc.) can't isolate one channel from another.
+
+       The two feOffset elements below have ids so carousel.js can read
+       and briefly boost their dx values as part of the unified backdrop
+       glitch transition (see triggerBackdropGlitch) — resting at ∓3px,
+       momentarily stronger right when a new image comes in, then back
+       to ∓3px. -->
   <svg aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden;">
     <filter id="chromatic-aberration">
       <feColorMatrix in="SourceGraphic" type="matrix"
@@ -47,7 +86,7 @@
                 0 0 0 0 0
                 0 0 0 0 0
                 0 0 0 1 0" result="red" />
-      <feOffset in="red" dx="-3" dy="0" result="redOffset" />
+      <feOffset id="chromatic-aberration-red-offset" in="red" dx="-6" dy="0" result="redOffset" />
 
       <feColorMatrix in="SourceGraphic" type="matrix"
         values="0 0 0 0 0
@@ -60,7 +99,7 @@
                 0 0 0 0 0
                 0 0 1 0 0
                 0 0 0 1 0" result="blue" />
-      <feOffset in="blue" dx="3" dy="0" result="blueOffset" />
+      <feOffset id="chromatic-aberration-blue-offset" in="blue" dx="6" dy="0" result="blueOffset" />
 
       <feBlend in="redOffset" in2="green" mode="screen" result="rg" />
       <feBlend in="rg" in2="blueOffset" mode="screen" />
@@ -90,13 +129,14 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="site-footer">
-    <div class="container">
-      <p>&copy; <span id="year"></span> Your Name. All rights reserved.</p>
+    <div class="container footer-inner">
+      <p>&copy; <span id="year"></span> Dushko Barutovski. All rights reserved.</p>
+      <div class="footer-social" id="footer-social"></div>
     </div>
   </footer>
 
-  <script src="data.js?v=2"></script>
-  <script src="site.js?v=2"></script>
-  <script src="carousel.js?v=5"></script>
+  <script src="data.js?v=3"></script>
+  <script src="site.js?v=3"></script>
+  <script src="carousel.js?v=8"></script>
 </body>
 </html>

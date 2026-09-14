@@ -185,6 +185,65 @@ h1, h2, h3 {
 }
 
 /* =====================================================
+   TEMPORARY PASSWORD GATE
+   A soft, client-side visitor gate — see password-gate.js for how it
+   works and how to remove it. `body.gate-locked` is set directly in
+   each page's HTML by default; it hides every top-level element
+   except this overlay, and gets removed by the script once the
+   right password's entered (or once the gate is switched off).
+   ===================================================== */
+   #password-gate {
+    display: none;
+  }
+  
+  body.gate-locked #password-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--color-bg);
+    padding: 1.5rem;
+  }
+  
+  body.gate-locked > *:not(#password-gate) {
+    display: none !important;
+  }
+  
+  .password-gate-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+  }
+  
+  .password-gate-form label {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  
+  .password-gate-form input {
+    padding: 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font: inherit;
+    background: var(--color-bg);
+    color: var(--color-text);
+    text-align: center;
+  }
+  
+  .password-gate-error {
+    min-height: 1.2em;
+    margin: 0;
+    color: #d64545;
+    font-size: 0.85rem;
+  }
+  
+
+/* =====================================================
    IMAGE FALLBACK
    Used anywhere a project image is inserted by JS (site.js's
    createProjectImage). Shows a labeled placeholder until a real
@@ -228,8 +287,17 @@ h1, h2, h3 {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden; /* safety net for the brief scale+translateX the glitch applies to the real image (see carousel.js) */
 }
 
+/* The backdrop glitch (see triggerBackdropGlitch in carousel.js) is no
+   longer a separate CSS animation or overlay element — it's a brief,
+   JS-driven burst that sets this element's own inline transform each
+   frame (layered on top of the pan-horizontal/pan-vertical animation
+   below, since transform and object-position are independent
+   properties) and simultaneously nudges the shared chromatic-aberration
+   filter's dx values in index.html. One shared progress value in JS
+   drives both, so nothing needs to live here beyond the resting styles. */
 .hero-backdrop img {
   position: absolute;
   inset: 0;
@@ -253,11 +321,11 @@ h1, h2, h3 {
   }
 
   .hero-backdrop img.pan-horizontal {
-    animation: pan-horizontal 24s ease-in-out forwards;
+    animation: pan-horizontal 10s ease-in-out forwards;
   }
 
   .hero-backdrop img.pan-vertical {
-    animation: pan-vertical 24s ease-in-out forwards;
+    animation: pan-vertical 10s ease-in-out forwards;
   }
 }
 
@@ -420,7 +488,7 @@ main section + section {
 
 .project-heading {
   position: absolute;
-  top: 2rem;
+  top: 2.5rem;
   left: 1.5rem;
   z-index: 2;
   color: #f0f0f0;
@@ -451,20 +519,56 @@ main section + section {
 .render-thumb-column {
   position: absolute;
   top: 50%;
-  left: 1.5rem;
+  left: -1rem;
   transform: translateY(-50%);
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  height: min(520px, 80%);
+  /* Tall enough for the 5-slot window (90px apart, full-size 140px
+     thumbnail at the centre) with clearance to spare — the selected
+     render is always centred now that navigation wraps (see
+     getCircularOffset via project.js's renderThumbnails), so there's
+     no boundary case that pushes a full-size thumbnail out to an
+     outer slot the way there would be with a non-wrapping window. */
+  height: min(640px, 80%);
+}
+
+/* Bounded window onto the render list — holds only a small, fixed
+   number of thumbnail slots at a time regardless of how many renders
+   the project actually has. overflow:hidden is scoped to just this
+   element rather than .render-stage or any other larger parent, so
+   the stack can never spill under the header, footer, or heading.
+   The optional has-more class (toggled in project.js) adds a soft
+   top/bottom fade to hint that the list loops beyond what's visible —
+   symmetric because navigation wraps at both ends, so there's never
+   a case with more content in only one direction. */
+.render-thumb-viewport {
+  position: relative;
+  flex: 1;
+  /* Explicit width, not a percentage: .render-thumb (below) is
+     absolutely positioned, so it can't contribute to this element's
+     size the way normal-flow content would — without an explicit
+     value here, .render-thumb-column (which sizes to fit its widest
+     child) collapses to just the width of the 44px arrow buttons,
+     and overflow:hidden below then clips the 100px thumbnails to a
+     sliver instead of bounding them properly. 120px covers the
+     100px thumbnail plus room for its selected-state outline (2px
+     wide, 3px offset) so that isn't clipped either. */
+  width: 120px;
+  overflow: hidden;
+}
+
+.render-thumb-viewport.has-more {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
 }
 
 .render-thumb-track {
   position: relative;
-  flex: 1;
   width: 100%;
+  height: 100%;
 }
 
 .render-thumb {
@@ -492,26 +596,25 @@ main section + section {
 .render-thumb.selected {
   -webkit-mask-image: none;
   mask-image: none;
-  outline: 2px solid rgba(240, 240, 240, 0.85);
+  outline: 2px solid rgb(253, 253, 253);
   outline-offset: 3px;
 }
 
-/* ---------- Main render (fills the entire stage) ---------- */
+/* ---------- Main render (fills the entire stage) ----------
+   The stage is now one continuous dark canvas rather than a framed
+   card: .render-backdrop (an enlarged, blurred copy of the current
+   render) fills it edge to edge with no fade to the page background,
+   and the sharp .render-main-image floats on top, feathering into
+   that backdrop via its own mask below instead of ending in a hard
+   rectangle. Kept dark regardless of the light/dark toggle, matching
+   the always-dark floating controls (info handle, magnifier toggle,
+   viewer controls) already used on this page. */
 .render-viewer {
   position: absolute;
   inset: 0;
-  border-radius: 8px;
   overflow: hidden;
-  background: var(--color-bg);
+  background: #0b0b0c; /* shows briefly while the backdrop/image are still loading */
   cursor: pointer; /* hints that clicking the render expands it */
-  -webkit-mask-image:
-    linear-gradient(to right, transparent, black 8%, black 92%, transparent),
-    linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent, black 8%, black 92%, transparent),
-    linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
-  mask-composite: intersect;
 }
 
 .render-backdrop {
@@ -519,8 +622,8 @@ main section + section {
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: blur(30px) brightness(0.735);
-  transform: scale(1.2); /* avoids visible blur edges */
+  filter: blur(50px) brightness(0.25);
+  transform: scale(1.25); /* enlarged so the blur never exposes an edge */
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -535,6 +638,14 @@ main section + section {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* Fades the sharp render to fully transparent by the time it
+     reaches its own edge, so the blurred backdrop underneath — the
+     same image, enlarged — shows through as a soft dissolve instead
+     of a hard cutout. "closest-side" sizing guarantees the fade is
+     already complete at (or before) the physical edge in every
+     direction, so no boundary line is ever visible; the central
+     ~70% stays completely sharp and untouched. */
+  
 }
 
 .render-viewer.img-missing {
@@ -546,6 +657,71 @@ main section + section {
   font-weight: 600;
   text-align: center;
   padding: 1rem;
+}
+
+/* ---------- Render-sequence progress ---------- */
+/* Purely informational readout of position within the current
+   project's renders — navigation still happens via the thumbnails,
+   arrows, and keyboard. A static child of #render-viewer (position:
+   absolute, so unaffected by the img-missing flex-centering above)
+   rather than something project.js rebuilds with the backdrop/image,
+   so its marker can transition smoothly, and so it automatically
+   follows #render-viewer's own layout on both desktop and mobile
+   with no extra positioning rules needed. */
+.render-progress {
+  position: absolute;
+  left: 2rem;
+  bottom: 5.5rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  pointer-events: none; /* informational only — never a drag/interaction target */
+  /* A drop-shadow on the whole group (not per-child) keeps the thin
+     line and small text legible over both light and dark parts of
+     the render without a background chip — same reasoning as the
+     text-shadow on .project-heading, just via filter so it also
+     covers the track/marker shapes, not only the text. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+}
+
+.render-progress-start,
+.render-progress-end {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(240, 240, 240, 0.92);
+}
+
+.render-progress-track {
+  position: relative;
+  width: 100px;
+  height: 7px;
+  background: rgba(240, 240, 240, 0.35);
+  border-radius: 4px;
+}
+
+.render-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: rgba(240, 240, 240, 0.9);
+  transition: width 0.35s ease;
+  border-radius: 4px;
+}
+
+.render-progress-marker {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  transform: translate(-50%, -50%);
+  transition: left 0.35s ease;
 }
 
 /* ---------- Fullscreen render view ---------- */
@@ -562,6 +738,7 @@ body.image-expanded .site-header,
 body.image-expanded .site-footer,
 body.image-expanded .project-heading,
 body.image-expanded .render-thumb-column,
+body.image-expanded .render-progress,
 body.image-expanded .info-toggle {
   display: none;
 }
@@ -572,9 +749,25 @@ body.image-expanded .render-viewer {
   z-index: 1000;
   border-radius: 0;
   background: #000000;
+  height: 100vh;
+  height: 100dvh;
   cursor: zoom-in; /* fit-width is off — clicking the image fits it to width */
   -webkit-mask-image: none;
   mask-image: none;
+}
+
+/* The feathered edge and the darker/larger backdrop above are for
+   the normal in-page viewer only. Fullscreen (the lightbox) keeps
+   exactly the appearance it already had before that change — full
+   opacity edge to edge, original blur/brightness/scale — untouched. */
+body.image-expanded .render-main-image {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+body.image-expanded .render-backdrop {
+  filter: blur(30px) brightness(0.2);
+  transform: scale(1.2);
 }
 
 /* "Fit width" mode: the render fills the screen's width and scrolls
@@ -699,8 +892,16 @@ body.image-expanded .viewer-controls {
    Letting flexbox handle the alignment sidesteps that miscalculation
    entirely. */
 body.image-expanded .magnifier-toggle {
-  position: static;
+  position: fixed;
+  top: 1.5rem;
+  /* Sits immediately left of .viewer-controls (right: 1.5rem, containing
+     two 40px buttons + a 0.75rem gap = 5.75rem wide), plus one more
+     0.75rem gap of its own: 1.5rem + 5.75rem + 0.75rem = 8rem. Matches
+     .viewer-controls's top/right exactly since it's no longer relying
+     on being an actual flex child of that container. */
+  right: 8rem;
   transform: none;
+  z-index: 1001;
 }
 
 /* The floating lens. Positioned via project.js (left/top follow the
@@ -761,7 +962,7 @@ body.image-expanded .magnifier-toggle {
   display: flex;
   flex-direction: row-reverse;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .info-handle {
@@ -778,11 +979,72 @@ body.image-expanded .magnifier-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
+/* "Click to pin" and "Click to unpin" tooltip — CSS-only, shown while hovering the handle,
+   hidden once the panel is locked open. Matches the handle's own
+   floating-chip style (dark, blurred, rounded, light text). */
+   .info-handle {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #f0f0f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  /* Button appearance when pinned */
+  .info-toggle.locked .info-handle {
+    background: rgba(240, 240, 240, 0.9);
+    color: #111111;
+  }
+  
+  /* "Click to pin / unpin" tooltip */
+  .info-handle::before {
+    content: "Click to pin";
+    position: absolute;
+    right: calc(-90% + 0.75rem);
+    top: 50%;
+    transform: translateY(70%);
+    z-index: 1;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #f0f0f0;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  
+  /* Unlocked */
+  .info-handle:hover::before {
+    content: "Click to pin";
+    opacity: 1;
+  }
+  
+  /* Locked */
+  .info-toggle.locked .info-handle:hover::before {
+    content: "Click to unpin";
+    opacity: 1;
+  }
+
 .info-handle .icon {
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -807,12 +1069,12 @@ body.image-expanded .magnifier-toggle {
    it open without needing the mouse to stay there. */
 .info-toggle:hover .project-panels,
 .info-toggle.locked .project-panels {
-  max-width: 320px;
+  max-width: 420px;
   opacity: 1;
 }
 
 .project-panels-inner {
-  width: 320px;
+  width: 420px;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -827,7 +1089,7 @@ body.image-expanded .magnifier-toggle {
 }
 
 .story-panel {
-  max-height: 260px;
+  max-height: 860px;
   overflow-y: auto;
   padding-right: 0.5rem;
 }
@@ -843,15 +1105,65 @@ body.image-expanded .magnifier-toggle {
 .site-footer {
   border-top: 1px solid var(--color-border);
   padding-block: 2rem;
-  text-align: center;
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+/* Copyright on the left, social icons on the right — wraps to
+   center-stacked on narrow screens instead (see responsive section). */
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  text-align: left;
+}
+
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-social a:hover,
+.footer-social a:focus-visible {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.footer-social svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* =====================================================
    RESPONSIVE
    ===================================================== */
 @media (max-width: 700px) {
+  .footer-inner {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
   .about-content {
     grid-template-columns: 1fr;
   }
@@ -875,6 +1187,19 @@ body.image-expanded .magnifier-toggle {
     display: none; /* up/down arrows don't read well next to a horizontal strip */
   }
 
+  /* The desktop vertical window/clipping is deliberately not carried
+     over to mobile — reset to a plain, non-constraining wrapper so
+     .render-thumb-track's own horizontal-strip rules (below) are
+     entirely in control, exactly as before this element existed. */
+  .render-thumb-viewport {
+    flex: none;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   .magnifier-toggle,
   .magnifier-lens {
     display: none; /* hover-tracking has no touch equivalent */
@@ -886,7 +1211,7 @@ body.image-expanded .magnifier-toggle {
     gap: 0.75rem;
     overflow-x: auto;
     height: 140px;
-    padding-inline: 0.25rem;
+    padding-inline: 1.5rem;
   }
 
   .render-thumb {
