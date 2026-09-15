@@ -26,6 +26,14 @@ const nextBtn = document.getElementById('render-next');
 
 const mobileQuery = window.matchMedia('(max-width: 700px)');
 
+prevBtn.addEventListener('click', () => {
+  showRender(renderIndex - 1);
+});
+
+nextBtn.addEventListener('click', () => {
+  showRender(renderIndex + 1);
+});
+
 function init() {
   document.title = `${project.name} | Dushko Barutovski`;
   titleEl.textContent = project.name;
