@@ -429,31 +429,50 @@ document.addEventListener('keydown', (event) => {
 
 init();
 
-/// =====================================================
+// =====================================================
 // Touch / Swipe navigation
 //
 // Swipe Up   → next render
 // Swipe Down → previous render
 //
-// Only vertical gestures that are deliberate and quick enough
-// are treated as navigation. Everything else behaves normally.
+// Only deliberate, single-finger vertical swipes are handled.
+// Pinch/zoom and other multi-touch gestures are ignored.
 // =====================================================
 
 let touchStartX = 0;
 let touchStartY = 0;
 let touchStartTime = 0;
+let touchTracking = false;
 let suppressNextViewerClick = false;
 
 viewerEl.addEventListener(
   'touchstart',
   (event) => {
+    // Ignore anything that isn't exactly one finger.
+    if (event.touches.length !== 1) {
+      touchTracking = false;
+      return;
+    }
+
     const touch = event.changedTouches[0];
 
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
     touchStartTime = Date.now();
 
+    touchTracking = true;
     suppressNextViewerClick = false;
+  },
+  { passive: true }
+);
+
+viewerEl.addEventListener(
+  'touchmove',
+  (event) => {
+    // The moment a second finger appears, this is no longer a swipe.
+    if (event.touches.length !== 1) {
+      touchTracking = false;
+    }
   },
   { passive: true }
 );
@@ -461,6 +480,12 @@ viewerEl.addEventListener(
 viewerEl.addEventListener(
   'touchend',
   (event) => {
+    // Ignore multi-touch gestures completely.
+    if (!touchTracking || event.touches.length > 0) {
+      touchTracking = false;
+      return;
+    }
+
     const touch = event.changedTouches[0];
 
     const deltaX = touch.clientX - touchStartX;
@@ -469,6 +494,8 @@ viewerEl.addEventListener(
 
     const horizontalDistance = Math.abs(deltaX);
     const verticalDistance = Math.abs(deltaY);
+
+    touchTracking = false;
 
     // Must be a reasonably quick gesture.
     if (elapsed > 500) return;
@@ -479,7 +506,7 @@ viewerEl.addEventListener(
     // Vertical movement must clearly dominate horizontal movement.
     if (verticalDistance < horizontalDistance * 1.3) return;
 
-    // Prevent the swipe from also triggering fullscreen/fit-width.
+    // Prevent the swipe from also triggering fullscreen.
     suppressNextViewerClick = true;
 
     if (deltaY < 0) {
@@ -489,6 +516,14 @@ viewerEl.addEventListener(
       // Swipe Down → previous render
       showRender(renderIndex - 1);
     }
+  },
+  { passive: true }
+);
+
+viewerEl.addEventListener(
+  'touchcancel',
+  () => {
+    touchTracking = false;
   },
   { passive: true }
 );
