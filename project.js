@@ -429,18 +429,19 @@ document.addEventListener('keydown', (event) => {
 
 init();
 
-// =====================================================
+/// =====================================================
 // Touch / Swipe navigation
 //
 // Swipe Up   → next render
 // Swipe Down → previous render
 //
-// Only swipes that begin on the render viewer are handled,
-// so normal page scrolling elsewhere is unaffected.
+// Only vertical gestures that are deliberate and quick enough
+// are treated as navigation. Everything else behaves normally.
 // =====================================================
 
 let touchStartX = 0;
 let touchStartY = 0;
+let touchStartTime = 0;
 let suppressNextViewerClick = false;
 
 viewerEl.addEventListener(
@@ -450,6 +451,8 @@ viewerEl.addEventListener(
 
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
+    touchStartTime = Date.now();
+
     suppressNextViewerClick = false;
   },
   { passive: true }
@@ -462,14 +465,21 @@ viewerEl.addEventListener(
 
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
+    const elapsed = Date.now() - touchStartTime;
 
-    // Only handle predominantly vertical gestures.
-    if (Math.abs(deltaY) <= Math.abs(deltaX)) return;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
 
-    // Ignore small movements that aren't intentional swipes.
-    if (Math.abs(deltaY) < 50) return;
+    // Must be a reasonably quick gesture.
+    if (elapsed > 500) return;
 
-    // Prevent the resulting tap/click from activating fullscreen.
+    // Must move far enough to count as an intentional swipe.
+    if (verticalDistance < 60) return;
+
+    // Vertical movement must clearly dominate horizontal movement.
+    if (verticalDistance < horizontalDistance * 1.3) return;
+
+    // Prevent the swipe from also triggering fullscreen/fit-width.
     suppressNextViewerClick = true;
 
     if (deltaY < 0) {
