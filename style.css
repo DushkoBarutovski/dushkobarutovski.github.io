@@ -912,7 +912,7 @@ body.image-expanded .magnifier-toggle {
   width: 400px;
   height: 400px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 0px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
   background-repeat: no-repeat;
   pointer-events: none; /* never intercepts clicks/hover itself */
@@ -1133,8 +1133,8 @@ body.image-expanded .magnifier-toggle {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid var(--color-border);
-  color: var(--color-muted);
+  border: 1px solid #f0f0f0;
+  color: #f0f0f0;
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -1145,8 +1145,8 @@ body.image-expanded .magnifier-toggle {
 }
 
 .footer-social svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;

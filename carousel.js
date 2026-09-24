@@ -36,6 +36,7 @@ function renderCarousel() {
     // Clicking a side card brings that project to the center instead.
     card.addEventListener('click', () => {
       if (isSelected) {
+        if (project.openable === false) return;
         goToProject(project.id);
       } else {
         selectedIndex = index;
@@ -281,13 +282,50 @@ function showNext() {
 prevBtn.addEventListener('click', showPrev);
 nextBtn.addEventListener('click', showNext);
 
+prevBtn.addEventListener('click', showPrev);
+nextBtn.addEventListener('click', showNext);
+
+
+// Carousel touch fucnctons delete if don't work
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', (event) => {
+  touchStartX = event.changedTouches[0].clientX;
+  touchStartY = event.changedTouches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', (event) => {
+  const touchEndX = event.changedTouches[0].clientX;
+  const touchEndY = event.changedTouches[0].clientY;
+
+  const deltaX = touchEndX - touchStartX;
+  const deltaY = touchEndY - touchStartY;
+
+  if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
+  if (Math.abs(deltaX) < 50) return;
+
+  if (deltaX < 0) {
+    showNext();
+  } else {
+    showPrev();
+  }
+});
+
+// Carousel touch fucnctons delete if don't work
+
 document.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowLeft') showPrev();
   if (event.key === 'ArrowRight') showNext();
 
-   if (event.key === 'Enter') {
-    goToProject(PROJECTS[selectedIndex].id);
-   }
+  if (event.key === 'Enter') {
+    const project = PROJECTS[selectedIndex];
+  
+    if (project.openable === false) return;
+  
+    goToProject(project.id);
+  }
 });
 
 renderCarousel();

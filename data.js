@@ -115,7 +115,8 @@ const PROJECTS = [
   },
   {
     id: "project-three",
-    name: "Project Three",
+    name: "Unnamed",
+    openable: false,
     heroImage: "images/project-three-hero.png",
     story: "Replace this with the story behind Project Three.",
     renders: [
@@ -126,7 +127,8 @@ const PROJECTS = [
   },
   {
     id: "project-four",
-    name: "Project Four",
+    name: "Unknown",
+    openable: false,
     heroImage: "images/project-four-hero.png",
     story: "Replace this with the story behind Project Four.",
     renders: [

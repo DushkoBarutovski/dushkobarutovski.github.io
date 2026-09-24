@@ -393,7 +393,12 @@ function setExpanded(expanded) {
 // keeps doing the exact same thing, this just gives the image itself
 // a second way to trigger it. Closing fullscreen stays on the ×
 // button and Escape, so that action isn't lost in the process.
-function handleViewerActivate() {
+function handleViewerActivate() {  //delete this if touch doesn't work, along with the touch code
+  if (suppressNextViewerClick) {
+    suppressNextViewerClick = false;
+    return;
+  }
+
   if (document.body.classList.contains('image-expanded')) {
     setFitWidth(!document.body.classList.contains('fit-width'));
   } else {
@@ -423,3 +428,57 @@ document.addEventListener('keydown', (event) => {
 });
 
 init();
+
+// =====================================================
+// Touch / Swipe navigation
+//
+// Swipe Up   → next render
+// Swipe Down → previous render
+//
+// Only swipes that begin on the render viewer are handled,
+// so normal page scrolling elsewhere is unaffected.
+// =====================================================
+
+let touchStartX = 0;
+let touchStartY = 0;
+let suppressNextViewerClick = false;
+
+viewerEl.addEventListener(
+  'touchstart',
+  (event) => {
+    const touch = event.changedTouches[0];
+
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    suppressNextViewerClick = false;
+  },
+  { passive: true }
+);
+
+viewerEl.addEventListener(
+  'touchend',
+  (event) => {
+    const touch = event.changedTouches[0];
+
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    // Only handle predominantly vertical gestures.
+    if (Math.abs(deltaY) <= Math.abs(deltaX)) return;
+
+    // Ignore small movements that aren't intentional swipes.
+    if (Math.abs(deltaY) < 50) return;
+
+    // Prevent the resulting tap/click from activating fullscreen.
+    suppressNextViewerClick = true;
+
+    if (deltaY < 0) {
+      // Swipe Up → next render
+      showRender(renderIndex + 1);
+    } else {
+      // Swipe Down → previous render
+      showRender(renderIndex - 1);
+    }
+  },
+  { passive: true }
+);
