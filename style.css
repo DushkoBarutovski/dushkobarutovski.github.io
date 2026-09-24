@@ -615,6 +615,7 @@ main section + section {
   overflow: hidden;
   background: #0b0b0c; /* shows briefly while the backdrop/image are still loading */
   cursor: pointer; /* hints that clicking the render expands it */
+  touch-action: none; /*REMOVE IF TOUCH ISN'T WORKING AS EXPECTED */
 }
 
 .render-backdrop {
