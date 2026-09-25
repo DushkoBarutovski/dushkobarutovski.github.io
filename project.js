@@ -488,7 +488,7 @@ viewerEl.addEventListener(
     touchTracking = false;
 
     // Must be a QUICK gesture.
-    if (elapsed > 350) return;
+    if (elapsed > 500) return;
 
     // Must travel far enough.
     if (verticalDistance < 60) return;
