@@ -469,12 +469,32 @@ viewerEl.addEventListener(
 viewerEl.addEventListener(
   'touchmove',
   (event) => {
-    // The moment a second finger appears, this is no longer a swipe.
+    // Multi-touch = pinch/zoom. Leave it completely alone.
     if (event.touches.length !== 1) {
       touchTracking = false;
+      return;
+    }
+
+    if (!touchTracking) return;
+
+    const touch = event.touches[0];
+
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    // Only take control once the gesture is clearly
+    // an intentional vertical swipe.
+    if (
+      verticalDistance >= 60 &&
+      verticalDistance >= horizontalDistance * 1.3
+    ) {
+      event.preventDefault();
     }
   },
-  { passive: true }
+  { passive: false }
 );
 
 viewerEl.addEventListener(
