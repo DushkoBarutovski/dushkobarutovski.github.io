@@ -435,32 +435,35 @@ init();
 // Swipe Up   → next render
 // Swipe Down → previous render
 //
-// Only deliberate, single-finger vertical swipes are handled.
-// Pinch/zoom and other multi-touch gestures are ignored.
+// Single-finger vertical swipes are handled.
+// Multi-touch gestures (pinch/zoom) are ignored.
 // =====================================================
 
 let touchStartX = 0;
 let touchStartY = 0;
 let touchStartTime = 0;
 let touchTracking = false;
+let swipeLocked = false;
 let suppressNextViewerClick = false;
 
 viewerEl.addEventListener(
   'touchstart',
   (event) => {
-    // Ignore anything that isn't exactly one finger.
+    // Ignore multi-touch immediately.
     if (event.touches.length !== 1) {
       touchTracking = false;
+      swipeLocked = false;
       return;
     }
 
-    const touch = event.changedTouches[0];
+    const touch = event.touches[0];
 
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
     touchStartTime = Date.now();
 
     touchTracking = true;
+    swipeLocked = false;
     suppressNextViewerClick = false;
   },
   { passive: true }
@@ -469,9 +472,11 @@ viewerEl.addEventListener(
 viewerEl.addEventListener(
   'touchmove',
   (event) => {
-    // Multi-touch = pinch/zoom. Leave it completely alone.
+    // Second finger = pinch/zoom.
+    // Completely abandon swipe handling.
     if (event.touches.length !== 1) {
       touchTracking = false;
+      swipeLocked = false;
       return;
     }
 
@@ -485,12 +490,17 @@ viewerEl.addEventListener(
     const horizontalDistance = Math.abs(deltaX);
     const verticalDistance = Math.abs(deltaY);
 
-    // Only take control once the gesture is clearly
-    // an intentional vertical swipe.
+    // Once the movement is clearly vertical,
+    // take control away from normal page scrolling.
     if (
-      verticalDistance >= 60 &&
-      verticalDistance >= horizontalDistance * 1.3
+      !swipeLocked &&
+      verticalDistance >= 10 &&
+      verticalDistance >= horizontalDistance * 1.2
     ) {
+      swipeLocked = true;
+    }
+
+    if (swipeLocked) {
       event.preventDefault();
     }
   },
@@ -500,9 +510,16 @@ viewerEl.addEventListener(
 viewerEl.addEventListener(
   'touchend',
   (event) => {
-    // Ignore multi-touch gestures completely.
-    if (!touchTracking || event.touches.length > 0) {
+    if (!touchTracking) {
+      swipeLocked = false;
+      return;
+    }
+
+    // If another finger is still involved, this was
+    // a multi-touch gesture, not a swipe.
+    if (event.touches.length > 0) {
       touchTracking = false;
+      swipeLocked = false;
       return;
     }
 
@@ -510,21 +527,23 @@ viewerEl.addEventListener(
 
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
+
     const elapsed = Date.now() - touchStartTime;
 
     const horizontalDistance = Math.abs(deltaX);
     const verticalDistance = Math.abs(deltaY);
 
     touchTracking = false;
+    swipeLocked = false;
 
-    // Must be a reasonably quick gesture.
-    if (elapsed > 500) return;
+    // Must be reasonably quick.
+    if (elapsed > 600) return;
 
-    // Must move far enough to count as an intentional swipe.
-    if (verticalDistance < 60) return;
+    // Must move far enough to be intentional.
+    if (verticalDistance < 50) return;
 
-    // Vertical movement must clearly dominate horizontal movement.
-    if (verticalDistance < horizontalDistance * 1.3) return;
+    // Vertical movement must clearly dominate.
+    if (verticalDistance < horizontalDistance * 1.2) return;
 
     // Prevent the swipe from also triggering fullscreen.
     suppressNextViewerClick = true;
@@ -544,6 +563,7 @@ viewerEl.addEventListener(
   'touchcancel',
   () => {
     touchTracking = false;
+    swipeLocked = false;
   },
   { passive: true }
 );
