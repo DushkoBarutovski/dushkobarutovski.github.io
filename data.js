@@ -115,19 +115,21 @@ const PROJECTS = [
   },
   {
     id: "project-three",
-    name: "Unnamed",
-    openable: false,
+    name: "Gēn'Āq",
+    openable: true,
     heroImage: "images/project-three-hero.png",
-    story: "Replace this with the story behind Project Three.",
+    story: "Gēn'Āq's community used to be settled by the coast and depend on the waters. They were workers, gatherers, fishermen, and divers who knew the coastline through generations of experience. They understood the tides, the seasons, the places where food could be found, and the dangers that came with the sea. Their knowledge was practical rather than written, passed from one generation to the next through stories and habit. When the catastrophe came and the coast changed. The waters became unpredictable, and places that had once sustained the community became dangerous or inaccessible. No single moment marked the end of their home, but Gēn'Āq's community simply began leaving and settling inland. Over time, eventually there was little reason to return to the coast. Gēn'Āq never adapted to life away from the coast. The new inland settlements and stories about other inland creatures were strange and scary, and everything was treated with suspicion. Gēn'Āq's appearance did little to help. To those who had never seen someone like Gēn'Āq, those features made the creature look more like something born from the catastrophe than a survivor of it. Gēn'Āq eventually became a wanderer, moving through the deep woods and the abandoned territories beyond the settlements, searching for any body of water suitable for settling around. Lakes, rivers, marshes, and hidden pools became the closest things to the home once lost. Yet the search never truly ended. Occasionally, Gēn'Āq would return to the coast, searching the ruins of the former home for anything that might explain what happened. The search continues despite finding no answers.",
     renders: [
       { image: "images/project-three-render-1.jpg", description: "Description for this render." },
       { image: "images/project-three-render-2.jpg", description: "Description for this render." },
-      { image: "images/project-three-render-3.jpg", description: "Description for this render." }
+      { image: "images/project-three-render-3.jpg", description: "Description for this render." },
+      { image: "images/project-three-render-4.gif", description: "Description for this render." },
+      { image: "images/project-three-render-5.jpg", description: "Description for this render." },
     ]
   },
   {
     id: "project-four",
-    name: "Unknown",
+    name: "The Sceintist",
     openable: false,
     heroImage: "images/project-four-hero.png",
     story: "Replace this with the story behind Project Four.",
@@ -139,7 +141,8 @@ const PROJECTS = [
   },
   {
     id: "project-five",
-    name: "Project Five",
+    name: "The Fieldworker",
+    openable: false,
     heroImage: "images/project-five-hero.png",
     story: "Replace this with the story behind Project Five.",
     renders: [
