@@ -64,12 +64,12 @@ const SOCIAL_LINKS = [
     <path d="M14.1 7.2l4.1 7.1c.8 1.4-.2 3.2-1.8 3.2h-2.5"></path>
   </svg>`
   },
-  {
-    id: "fiverr",
-    label: "Fiverr",
-    url: "#",
-    icon: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><text x="12" y="16" text-anchor="middle" font-size="8.5" font-weight="700" font-family="sans-serif" fill="currentColor" stroke="none">fi</text></svg>`
-  }
+  //{
+  //  id: "fiverr",
+  //  label: "Fiverr",
+  //  url: "#",
+  //  icon: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><text x="12" y="16" text-anchor="middle" font-size="8.5" font-weight="700" font-family="sans-serif" fill="currentColor" stroke="none">fi</text></svg>`
+  //}
 ];
 
 const PROJECTS = [
