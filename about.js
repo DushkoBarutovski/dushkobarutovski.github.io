@@ -4,11 +4,19 @@
 // real service (Formspree and EmailJS are both free and
 // beginner-friendly) or your own backend when you're ready.
 // =====================================================
-const contactForm = document.getElementById('contact-form');
-const formStatus = document.getElementById('form-status');
+//const contactForm = document.getElementById('contact-form');
+//const formStatus = document.getElementById('form-status');
 
-contactForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  formStatus.textContent = "Thanks! This form isn't connected to anything yet — we'll wire it up later.";
-  contactForm.reset();
-});
+//contactForm.addEventListener('submit', (event) => {
+//  event.preventDefault();
+//  formStatus.textContent = "Thanks! This form isn't connected to anything yet — we'll wire it up later.";
+//  contactForm.reset();
+//});
+
+const contactForm = document.getElementById('contact-form');
+
+if (contactForm) {
+  contactForm.addEventListener('submit', (event) => {
+    // Let the form submit normally to Web3Forms.
+  });
+}
