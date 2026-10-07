@@ -84,7 +84,7 @@ const PROJECTS = [
       { image: "images/project-one-render-3.jpg", description: "Rōdvīras' alternative render." },
       { image: "images/project-one-render-4.gif", poster: "images/project-one-render-4-poster.jpg", description: "Final render composition passes." },
       { image: "images/project-one-render-5.jpg", description: "Rōdvīras' Headshot" },
-      { image: "images/project-one-render-6.gif", poster: "images/project-one-render-6-poster.jpg", description: "Head texture layers." },
+      { image: "images/project-one-render-6.gif", poster: "images/project-one-render-5-poster.jpg", description: "Head texture layers." },
       { image: "images/project-one-render-7.jpg", description: "Rōdvīras' second alternative render." },
       { image: "images/project-one-render-8.jpg", description: "Jackt close up." },
       { image: "images/project-one-render-9.jpg", description: "Albedo render." },
