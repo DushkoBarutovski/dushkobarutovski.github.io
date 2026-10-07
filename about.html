@@ -87,26 +87,33 @@
     <section class="contact">
       <div class="container">
         <h2>Get in Touch</h2>
-        <p>Have a project in mind, or just want to say hi? Send a message below.</p>
+        <p>Want to say hi or have a project in mind? Send me a message below.</p>
 
-        <form id="contact-form" class="contact-form">
-          <label for="name">Name</label>
-          <input type="text" id="name" name="name" required>
+        
+    <form
+      id="contact-form"
+      class="contact-form"
+      action="https://formspree.io/f/xgaoazyb"
+      method="POST"
+    >
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
 
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" required>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
 
-          <label for="message">Message</label>
-          <textarea id="message" name="message" rows="5" required></textarea>
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="5" required></textarea>
 
-          <button type="submit" class="btn btn-primary">Send message</button>
-          <p id="form-status" class="form-status" role="status"></p>
-        </form>
+      <button type="submit" class="btn btn-primary">Send message</button>
+      <p id="form-status" class="form-status" role="status"></p>
+    </form>
+
+
 
         <div class="social-links">
-          <a href="#">LinkedIn</a>
-          <a href="#">GitHub</a>
-          <a href="#">Email</a>
+          <a href="#">Instagram</a>
+          <a href="#">ArtStation</a>
         </div>
       </div>
     </section>
