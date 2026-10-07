@@ -89,7 +89,13 @@
         <h2>Get in Touch</h2>
         <p>Have a project in mind, or just want to say hi? Send a message below.</p>
 
-        <form id="contact-form" class="contact-form">
+        <form
+          id="contact-form"
+          class="contact-form"
+          action="https://api.web3forms.com/submit"
+          method="POST"
+        >
+          <input type="hidden" name="access_key" value="1cbf0f75-5024-4950-bd96-19de949100e8">
           <label for="name">Name</label>
           <input type="text" id="name" name="name" required>
 
