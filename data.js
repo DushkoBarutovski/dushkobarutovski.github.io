@@ -146,13 +146,19 @@ const PROJECTS = [
   {
     id: "project-five",
     name: "The Fieldworker",
-    openable: false,
+    openable: true,
     heroImage: "images/project-five-hero.png",
     story: "Replace this with the story behind Project Five.",
     renders: [
       { image: "images/project-five-render-1.jpg", description: "Description for this render." },
       { image: "images/project-five-render-2.jpg", description: "Description for this render." },
-      { image: "images/project-five-render-3.jpg", description: "Description for this render." }
+      { image: "images/project-five-render-3.jpg", description: "Description for this render." },
+      { image: "images/project-five-render-4.gif", description: "Description for this render." },
+      { image: "images/project-five-render-5.jpg", description: "Description for this render." },
+      { image: "images/project-five-render-6.jpg", description: "Description for this render." },
+      { image: "images/project-five-render-7.jpg", description: "Description for this render." },
+      { image: "images/project-five-render-8.jpg", description: "Description for this render." },
+      { image: "images/project-five-render-9.jpg", description: "Description for this render." },
     ]
   }
 ];

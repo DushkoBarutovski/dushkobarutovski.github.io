@@ -21,7 +21,7 @@
 // page's <head> at the same time — that one's what's telling search
 // engines not to index the site while it's gated.
 // =====================================================
-const GATE_ENABLED = true;
+const GATE_ENABLED = false;
 const SITE_PASSWORD = '1n33daw3bs1te';
 const STORAGE_KEY = 'site-password-ok';
 
