@@ -133,7 +133,7 @@ const PROJECTS = [
   },
   {
     id: "project-four",
-    name: "The Sceintist",
+    name: "\"The Sceintist\"",
     openable: false,
     heroImage: "images/project-four-hero.png",
     story: "Replace this with the story behind Project Four.",
@@ -144,18 +144,18 @@ const PROJECTS = [
     ]
   },
   {
-    id: "project-five",
-    name: "The Fieldworker",
+    id: "Pälvökt",
+    name: "Pälvökt",
     openable: true,
     heroImage: "images/project-five-hero.png",
-    story: "Replace this with the story behind Project Five.",
+    story: "Pälvökt grew up in environments that few others wanted to visit. There were reasons people avoided these places, though the nature of those reasons remains unclear. Life in such surroundings brought familiarity with difficult terrain, unfamiliar materials, and details that others might overlook. These experiences would eventually prove more valuable than anyone could have anticipated.\n\nAs the catastrophe gradually changed the world, familiar environments became unpredictable, and materials that had once been ordinary grew scarce, altered, or potentially dangerous. As communities struggled to adapt, the territories beyond their settlements became increasingly difficult to navigate, and venturing into them carried risks that few were willing to take. \n\nA lifetime spent in often-avoided environments made Pälvökt well suited to exploring territories others were reluctant to enter. Swamps, forests, and other altered landscapes became part of a new daily routine. The work involved locating and collecting materials, treating them when necessary, and bringing them back from places where few others could safely venture. \n\nA strange substance, an unusual change in the vegetation, or something behaving differently than expected could be reason enough for a closer look. Not every discovery proved useful, and not every observation led to an answer. Still, each expedition offered another glimpse into a world that no longer behaved as it once had. \n\nThe world is still far from what it had once been, but Pälvökt saw that not every change brought only loss. There were new ways to make use of old resources, mutated materials with unexpected uses, and places where life might yet find a way to flourish. Each discovery offered a small glimpse of hope and opened up possibilities that had yet to be explored. All this gave a small hope for possibilities that had yet to be explored. Pälvökt continued the work, one expedition at a time, never knowing what the next journey might reveal.",
     renders: [
       { image: "images/project-five-render-1.jpg", description: "Description for this render." },
       { image: "images/project-five-render-2.jpg", description: "Description for this render." },
       { image: "images/project-five-render-3.jpg", description: "Description for this render." },
       { image: "images/project-five-render-4.gif", description: "Description for this render." },
       { image: "images/project-five-render-5.jpg", description: "Description for this render." },
-      { image: "images/project-five-render-6.jpg", description: "Description for this render." },
+      { image: "images/project-five-render-6.gif", description: "Description for this render." },
       { image: "images/project-five-render-7.jpg", description: "Description for this render." },
       { image: "images/project-five-render-8.jpg", description: "Description for this render." },
       { image: "images/project-five-render-9.jpg", description: "Description for this render." },
