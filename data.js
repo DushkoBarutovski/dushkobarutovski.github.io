@@ -26,6 +26,14 @@
 // uses the real (animated) `image` once that render is selected.
 // Renders without a `poster` just use their own `image` for the
 // thumbnail too, exactly as before. See project-one's 4th render.
+//
+// VIDEOS: a render can be a video instead of an image — use `video`
+// in place of `image`, and give it a `poster` (one still frame
+// exported as .jpg) for its thumbnail and loading frame:
+//   { video: "videos/project-one-turntable.mp4", poster: "videos/project-one-turntable-poster.jpg", description: "Turntable." },
+// Use .mp4 (H.264 video, AAC audio) so it plays in every browser.
+// It autoplays muted and looping, with a control bar for play/pause,
+// scrubbing, and sound. Keep each file under ~25 MB.
 // =====================================================
 // =====================================================
 // Footer social links
@@ -76,13 +84,14 @@ const PROJECTS = [
   {
     id: "Rōdvīras",
     name: "Rōdvīras",
-    heroImage: "images/project-one-hero.png",
+    heroImage: "images/project-one-hero.webp",
     story: "Rōdvīras is an outsider who arrived from the outer world before the catastrophe, carrying knowledge of what was to come and intending to use it to prevent it. An intellectual among the kind, accustomed to understanding problems through observation, reason, and knowledge, the arrival soon revealed an important limitation: understanding a world was not the same as understanding the people who lived in it. Rōdvīras' warnings were interpreted through faith, questioned through science, and rejected by those who could not imagine their world coming to an end. The catastrophe came shortly after Rōdvīras' arrival, despite every effort to prevent it. Conflicting accounts of what had happened emerged, and questions remained that neither faith nor science could answer alone. Priests interpreted the catastrophe through faith, researchers searched for evidence, and survivors carried memories that often contradicted them both. Rather than choosing one explanation and dismissing the others, Rōdvīras began to wonder if these accounts were different interpretations of the same truth. Rōdvīras became an advisor. Priests, researchers, rulers, and ordinary survivors sought knowledge, and answers were offered when possible. When not, there was never a fear of admitting, “I do not know.” The purpose is no longer simply to understand how the catastrophe could have been prevented, but to understand the world and its people well enough to discover what truly happened. Somewhere between faith, science, memory, and observation may lie the knowledge that could one day allow the catastrophe to be reversed.",
     renders: [
       { image: "images/project-one-render-1.jpg", description: "Rōdvīras' hero render." },
       { image: "images/project-one-render-2.jpg", description: "Clay render." },
       { image: "images/project-one-render-3.jpg", description: "Rōdvīras' alternative render." },
       { image: "images/project-one-render-4.gif", poster: "images/project-one-render-4-poster.jpg", description: "Final render composition passes." },
+      { video: "videos/project-one-turntable.mp4", poster: "videos/project-one-turntable-poster.jpg", description: "Turntable." },
       { image: "images/project-one-render-5.jpg", description: "Rōdvīras' Headshot" },
       { image: "images/project-one-render-6.gif", poster: "images/project-one-render-5-poster.jpg", description: "Head texture layers." },
       { image: "images/project-one-render-7.jpg", description: "Rōdvīras' second alternative render." },
@@ -95,13 +104,14 @@ const PROJECTS = [
   {
     id: "Vandūnas",
     name: "Vandūnas",
-    heroImage: "images/project-two-hero.png",
+    heroImage: "images/project-two-hero.webp",
     story: "Vandūnas is a priest of the Third Rank of the Order of the Ones with the Waters, an ancient priesthood that once guided sailors, hunters, researchers, merchants, rulers, and all others whose lives depended on the waters. The waters were believed to have souls of their own and to speak to the priests of the higher ranks. Through whispers and visions, the Order was said to shape the future. But the waters eventually went silent. It may be that the Order lost the ability to listen, or that the waters lost their souls. As the visions faded, the temples emptied, donations ceased, and the priesthood slowly dispersed. Yet when the Order faded, Vandūnas remained. He was never one of the gifted, having never received vivid visions or clear whispers, and never rising beyond the Third Rank. His duties were humble: maintaining the temple, preserving records, tending sacred rituals, and offering blessings to those who depended on the waters. He still does not know if the waters will ever speak, but someone should be there to listen if they do.",
     renders: [
       { image: "images/project-two-render-1.jpg", description: "Vandūnas hero render." },
       { image: "images/project-two-render-2.jpg", description: "Vandūnas clay render." },
       { image: "images/project-two-render-3.jpg", description: "Vandūnas alternate render." },
       { image: "images/project-two-render-4.jpg", description: "Vandūnas alternate render." },
+      { video: "videos/project-two-turntable.mp4", poster: "videos/project-two-turntable-poster.jpg", description: "Turntable." },
       { image: "images/project-two-render-5.gif", poster: "images/project-two-render-5-poster.jpg", description: "Final render composition passes." },
       { image: "images/project-two-render-6.jpg", description: "Albedo render." },
       { image: "images/project-two-render-7.jpg", description: "Ambient Occulsion (AO) render." },
@@ -116,13 +126,14 @@ const PROJECTS = [
     id: "Gēn'Āq",
     name: "Gēn'Āq",
     openable: true,
-    heroImage: "images/project-three-hero.png",
+    heroImage: "images/project-three-hero.webp",
     story: "Gēn'Āq's community used to be settled by the coast and depend on the waters. They were workers, gatherers, fishermen, and divers who knew the coastline through generations of experience. They understood the tides, the seasons, the places where food could be found, and the dangers that came with the sea. Their knowledge was practical rather than written, passed from one generation to the next through stories and habit. When the catastrophe came and the coast changed. The waters became unpredictable, and places that had once sustained the community became dangerous or inaccessible. No single moment marked the end of their home, but Gēn'Āq's community simply began leaving and settling inland. Over time, eventually there was little reason to return to the coast. Gēn'Āq never adapted to life away from the coast. The new inland settlements and stories about other inland creatures were strange and scary, and everything was treated with suspicion. Gēn'Āq's appearance did little to help. To those who had never seen someone like Gēn'Āq, those features made the creature look more like something born from the catastrophe than a survivor of it. Gēn'Āq eventually became a wanderer, moving through the deep woods and the abandoned territories beyond the settlements, searching for any body of water suitable for settling around. Lakes, rivers, marshes, and hidden pools became the closest things to the home once lost. Yet the search never truly ended. Occasionally, Gēn'Āq would return to the coast, searching the ruins of the former home for anything that might explain what happened. The search continues despite finding no answers.",
     renders: [
       { image: "images/project-three-render-1.jpg", description: "Gēn'Āq hero render." },
       { image: "images/project-three-render-2.jpg", description: "Clay render." },
       { image: "images/project-three-render-3.jpg", description: "Gēn'Āq alternative render." },
       { image: "images/project-three-render-4.gif", poster: "images/project-three-render-4-poster.jpg", description: "Composition passes." },
+      { video: "videos/project-three-turntable.mp4", poster: "videos/project-three-turntable-poster.jpg", description: "Turntable." },
       { image: "images/project-three-render-5.jpg", description: "Gēn'Āq second alternative render." },
       { image: "images/project-three-render-6.jpg", description: "Albedo" },
       { image: "images/project-three-render-7.gif", poster: "images/project-three-render-7-poster.jpg", description: "Head texture layers." },
@@ -135,7 +146,7 @@ const PROJECTS = [
     id: "project-four",
     name: "\"The Sceintist\"",
     openable: false,
-    heroImage: "images/project-four-hero.png",
+    heroImage: "images/project-four-hero.webp",
     story: "Replace this with the story behind Project Four.",
     renders: [
       { image: "images/project-four-render-1.jpg", description: "Description for this render." },
@@ -147,18 +158,17 @@ const PROJECTS = [
     id: "Pälvökt",
     name: "Pälvökt",
     openable: true,
-    heroImage: "images/project-five-hero.png",
+    heroImage: "images/project-five-hero.webp",
     story: "Pälvökt grew up in environments that few others wanted to visit. There were reasons people avoided these places, though the nature of those reasons remains unclear. Life in such surroundings brought familiarity with difficult terrain, unfamiliar materials, and details that others might overlook. These experiences would eventually prove more valuable than anyone could have anticipated.\n\nAs the catastrophe gradually changed the world, familiar environments became unpredictable, and materials that had once been ordinary grew scarce, altered, or potentially dangerous. As communities struggled to adapt, the territories beyond their settlements became increasingly difficult to navigate, and venturing into them carried risks that few were willing to take. \n\nA lifetime spent in often-avoided environments made Pälvökt well suited to exploring territories others were reluctant to enter. Swamps, forests, and other altered landscapes became part of a new daily routine. The work involved locating and collecting materials, treating them when necessary, and bringing them back from places where few others could safely venture. \n\nA strange substance, an unusual change in the vegetation, or something behaving differently than expected could be reason enough for a closer look. Not every discovery proved useful, and not every observation led to an answer. Still, each expedition offered another glimpse into a world that no longer behaved as it once had. \n\nThe world is still far from what it had once been, but Pälvökt saw that not every change brought only loss. There were new ways to make use of old resources, mutated materials with unexpected uses, and places where life might yet find a way to flourish. Each discovery offered a small glimpse of hope and opened up possibilities that had yet to be explored. All this gave a small hope for possibilities that had yet to be explored. Pälvökt continued the work, one expedition at a time, never knowing what the next journey might reveal.",
     renders: [
       { image: "images/project-five-render-1.jpg", description: "Description for this render." },
       { image: "images/project-five-render-2.jpg", description: "Description for this render." },
       { image: "images/project-five-render-3.jpg", description: "Description for this render." },
       { image: "images/project-five-render-4.gif", description: "Description for this render." },
+      { video: "videos/project-five-turntable.mp4", poster: "videos/project-five-turntable-poster.jpg", description: "Turntable." },
       { image: "images/project-five-render-5.jpg", description: "Description for this render." },
-      { image: "images/project-five-render-6.gif", description: "Description for this render." },
       { image: "images/project-five-render-7.jpg", description: "Description for this render." },
       { image: "images/project-five-render-8.jpg", description: "Description for this render." },
-      { image: "images/project-five-render-9.jpg", description: "Description for this render." },
     ]
   }
 ];
