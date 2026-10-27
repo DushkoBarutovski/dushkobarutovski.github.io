@@ -128,7 +128,12 @@ function updateBackdrop(project) {
   backdrop.querySelectorAll('img').forEach((img) => img.remove());
   resetGlitch();
 
-  backdropImages = [project.heroImage, project.renders[1]?.image, project.renders[2]?.image].filter(Boolean);
+  // A video render has no `image`, so its `poster` stands in here.
+  backdropImages = [
+    project.heroImage,
+    project.renders[1]?.image || project.renders[1]?.poster,
+    project.renders[2]?.image || project.renders[2]?.poster
+  ].filter(Boolean);
 
   backdropIndex = 0;
   showBackdropImage(backdropToken);

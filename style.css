@@ -187,10 +187,10 @@ h1, h2, h3 {
 /* =====================================================
    TEMPORARY PASSWORD GATE
    A soft, client-side visitor gate — see password-gate.js for how it
-   works and how to remove it. `body.gate-locked` is set directly in
-   each page's HTML by default; it hides every top-level element
-   except this overlay, and gets removed by the script once the
-   right password's entered (or once the gate is switched off).
+   works and how to remove it. `body.gate-locked` is added by that
+   script only while the gate is switched on and not yet unlocked;
+   it hides every top-level element except this overlay, and gets
+   removed once the right password's entered.
    ===================================================== */
    #password-gate {
     display: none;
@@ -580,24 +580,29 @@ main section + section {
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.4s ease, opacity 0.4s ease;
-  -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
-  mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
 }
 
+/* The soft edge fade lives on the picture (not the whole thumbnail)
+   so the type badge in the corner stays readable. */
 .render-thumb-image {
   width: 100%;
   height: 100%;
   border-radius: 10px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
 }
 
 /* The selected thumbnail drops the edge fade (full clarity) and
    gets a thin ring instead, so it reads clearly as "this one" in
    both the desktop coverflow and the mobile strip. */
 .render-thumb.selected {
-  -webkit-mask-image: none;
-  mask-image: none;
   outline: 2px solid rgb(253, 253, 253);
   outline-offset: 3px;
+}
+
+.render-thumb.selected .render-thumb-image {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* ---------- Main render (fills the entire stage) ----------
@@ -615,6 +620,25 @@ main section + section {
   overflow: hidden;
   background: #0b0b0c; /* shows briefly while the backdrop/image are still loading */
   cursor: pointer; /* hints that clicking the render expands it */
+}
+
+/* No browser focus ring on the viewer: it fills the whole stage, so
+   the ring was drawn right along the header and footer edges as a
+   thin line whenever a key was pressed after clicking the render. */
+.render-viewer:focus,
+.render-viewer:focus-visible {
+  outline: none;
+}
+
+/* Over the blurred letterbox around the render (not the picture
+   itself), clicking does nothing in the page view, and closes the
+   fullscreen preview — see isPointOverImage in project.js */
+body:not(.image-expanded) .render-viewer.off-image {
+  cursor: default;
+}
+
+body.image-expanded .render-viewer.off-image:not(.magnifier-active) {
+  cursor: default;
 }
 
 .render-backdrop {
@@ -963,6 +987,23 @@ body.image-expanded .magnifier-toggle {
   flex-direction: row-reverse;
   align-items: center;
   gap: 1rem;
+  /* The collapsed panel is invisible but still makes this container
+     tall, so the container itself ignores the mouse — only the handle
+     can start the hover. Once open (hovered via the handle, or locked),
+     the whole area takes the mouse again so you can move onto the
+     panel and scroll it without it closing. */
+  pointer-events: none;
+}
+
+.info-handle,
+.info-toggle.locked {
+  pointer-events: auto;
+}
+
+@media (hover: hover) {
+  .info-toggle:hover {
+    pointer-events: auto;
+  }
 }
 
 .info-handle {
@@ -1067,10 +1108,16 @@ body.image-expanded .magnifier-toggle {
 /* Hovering the handle (or the panel itself, once it's open) reveals
    it; the "locked" class (added by a click, see project.js) keeps
    it open without needing the mouse to stay there. */
-.info-toggle:hover .project-panels,
 .info-toggle.locked .project-panels {
   max-width: 420px;
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .info-toggle:hover .project-panels {
+    max-width: 420px;
+    opacity: 1;
+  }
 }
 
 .project-panels-inner {
@@ -1157,7 +1204,7 @@ body.image-expanded .magnifier-toggle {
 /* =====================================================
    RESPONSIVE
    ===================================================== */
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-height: 500px) and (orientation: landscape) {
   .footer-inner {
     flex-direction: column;
     justify-content: center;
@@ -1255,6 +1302,7 @@ body.image-expanded .magnifier-toggle {
     position: static;
     transform: none;
     order: 3;
+    pointer-events: auto; /* no hover on touch; panel is always shown */
     flex-direction: column;
     align-items: stretch;
     gap: 0;
@@ -1304,5 +1352,255 @@ body.image-expanded .magnifier-toggle {
   .carousel-card {
     width: var(--card-width);
     height: var(--card-height);
+  }
+}
+
+
+/* =====================================================
+   VIDEO RENDERS (see showVideo in project.js)
+   ===================================================== */
+
+/* Magnifier and fit-width are image-only, so they hide for videos. */
+body.viewing-video .magnifier-toggle,
+body.viewing-video .viewer-fit-toggle,
+body.viewing-video .magnifier-lens {
+  display: none !important;
+}
+
+/* With fit-width hidden, the magnifier slot isn't needed either —
+   the close button sits alone in the top-right as usual. */
+
+.render-main-video {
+  display: block;
+  background: transparent;
+}
+
+/* In fullscreen, clicking the video plays/pauses it (no zoom). */
+body.image-expanded.viewing-video .render-viewer {
+  cursor: pointer;
+}
+
+/* Control bar: same dark, blurred chip style as the other floating
+   controls on this page. Fades in while the pointer is over the
+   viewer, while it has keyboard focus, or while the video is paused. */
+.video-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 5.5rem; /* level with the render counter on the left */
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(520px, calc(100% - 4rem));
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f0f0f0;
+  cursor: default;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.render-viewer:hover .video-controls,
+.render-viewer.video-paused .video-controls,
+.video-controls:focus-within {
+  opacity: 1;
+}
+
+body.image-expanded .video-controls {
+  bottom: 1.5rem;
+}
+
+.video-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.video-btn:hover {
+  background: rgba(240, 240, 240, 0.15);
+}
+
+.video-btn .icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.video-btn .icon-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.video-btn .icon-stroke path:first-child {
+  fill: currentColor;
+}
+
+.video-time {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(240, 240, 240, 0.85);
+}
+
+/* Seek bar — styled to match the render counter's thin track. */
+.video-seek {
+  --seek-fill: 0%;
+  flex: 1;
+  min-width: 0;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.video-seek::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(to right, rgba(240, 240, 240, 0.9) var(--seek-fill), rgba(240, 240, 240, 0.3) var(--seek-fill));
+}
+
+.video-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: none;
+}
+
+.video-seek::-moz-range-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(240, 240, 240, 0.3);
+}
+
+.video-seek::-moz-range-progress {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(240, 240, 240, 0.9);
+}
+
+.video-seek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: none;
+}
+
+/* Thumbnail type badge — "▶ 0:06" on videos, "⟲ GIF" on GIFs,
+   nothing on still images (see createTypeBadge in project.js). */
+.render-type-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f0f0f0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.render-type-badge .icon {
+  width: 11px;
+  height: 11px;
+  fill: currentColor;
+}
+
+.render-type-badge .icon-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Touch screens have no hover, so the bar is always shown there. */
+@media (hover: none) {
+  .video-controls {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 700px), (max-height: 500px) and (orientation: landscape) {
+  .video-controls {
+    bottom: 3rem; /* sits just above the render counter */
+    width: calc(100% - 1.5rem);
+  }
+
+  .render-progress {
+    bottom: 1rem;
+    left: 1.25rem;
+  }
+
+  .render-thumb {
+    position: relative; /* anchor for the play badge in the mobile strip */
+    top: auto;
+    left: auto;
+  }
+
+  /* Let the story flow with the page instead of a small inner scroll box */
+  .story-panel {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+/* Shorter desktop/tablet screens (e.g. a tablet held sideways or a
+   small laptop): keep the thumbnail column in the space between the
+   project title and the render counter instead of running into them.
+   Taller screens are unaffected. */
+@media (min-width: 701px) and (min-height: 501px) and (max-height: 950px) {
+  .render-thumb-column {
+    top: calc(50% + 2rem);
+    height: min(640px, calc(100% - 20rem));
+  }
+}
+
+/* =====================================================
+   TOUCH SCREENS (phones, tablets)
+   No mouse to hover with, so hover-only behaviour is turned off:
+   the info panel opens/closes by tapping its button, and the
+   magnifier (which follows a mouse pointer) is hidden.
+   ===================================================== */
+@media (hover: none) {
+  .magnifier-toggle,
+  .magnifier-lens {
+    display: none !important;
+  }
+
+  .info-handle::before {
+    display: none; /* "Click to pin" tooltip */
   }
 }

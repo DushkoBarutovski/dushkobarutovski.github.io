@@ -32,6 +32,12 @@ function unlockGate() {
 if (!GATE_ENABLED || localStorage.getItem(STORAGE_KEY) === 'yes') {
   unlockGate();
 } else {
+  // Pages start unlocked (no `gate-locked` in the HTML), so nothing
+  // flashes while this file loads when the gate is off. When it's on,
+  // lock here — this script runs before the rest of the page is
+  // parsed, so the real content still never shows first.
+  document.body.classList.add('gate-locked');
+
   const form = document.getElementById('password-gate-form');
   const input = document.getElementById('password-gate-input');
   const errorText = document.getElementById('password-gate-error');

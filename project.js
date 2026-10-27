@@ -10,6 +10,8 @@ const project = PROJECTS.find((p) => p.id === requestedId) || PROJECTS[0];
 
 let renderIndex = 0;
 let currentImage = null; // the <img> currently in the viewer, used by the magnifier below
+let currentVideo = null; // the <video> currently in the viewer, if this render is a video
+let videoMuted = true;   // remembered between videos for this visit (starts muted so autoplay is allowed)
 
 const titleEl = document.getElementById('project-title');
 const storyText = document.getElementById('story-text');
@@ -24,7 +26,12 @@ const thumbViewport = document.getElementById('render-thumb-viewport');
 const prevBtn = document.getElementById('render-prev');
 const nextBtn = document.getElementById('render-next');
 
-const mobileQuery = window.matchMedia('(max-width: 700px)');
+// Keep in sync with the phone-layout media query in style.css
+// (narrow screens, plus phones held sideways).
+const mobileQuery = window.matchMedia('(max-width: 700px), (max-height: 500px) and (orientation: landscape)');
+// Rotating a phone/tablet can switch layouts — rebuild the thumbnails
+// for the new one straight away.
+mobileQuery.addEventListener('change', () => renderThumbnails());
 
 prevBtn.addEventListener('click', () => {
   showRender(renderIndex - 1);
@@ -47,18 +54,32 @@ function showRender(index) {
   const render = project.renders[renderIndex];
 
   viewerEl.classList.remove('img-missing');
+  stopCurrentVideo();
+  const isVideo = Boolean(render.video);
+  document.body.classList.toggle('viewing-video', isVideo);
+  if (isVideo && document.body.classList.contains('fit-width')) {
+    setFitWidth(false); // fit-width is image-only; its button hides for videos
+  }
   // Only the previous backdrop/image (or missing-render label) are
   // cleared here — #render-progress is a static child of this same
   // element (see project.html) that persists across renders so its
   // marker can transition smoothly instead of popping to a new
   // position every time.
-  viewerEl.querySelectorAll('.render-backdrop, .render-main-image, .render-missing-label').forEach((el) => el.remove());
+  viewerEl.querySelectorAll('.render-backdrop, .render-main-image, .render-missing-label, .video-controls').forEach((el) => el.remove());
 
   // A blurred copy of the same image fills the space around a
   // portrait render instead of leaving plain white on the sides —
   // a simple stand-in for "matching colours" that works for any image.
   const renderBackdrop = document.createElement('div');
   renderBackdrop.className = 'render-backdrop';
+
+  if (isVideo) {
+    showVideo(render, renderBackdrop);
+    descriptionText.textContent = render.description;
+    renderThumbnails();
+    updateProgressIndicator();
+    return;
+  }
 
   const img = document.createElement('img');
   img.className = 'render-main-image';
@@ -87,6 +108,245 @@ function showRender(index) {
   descriptionText.textContent = render.description;
   renderThumbnails();
   updateProgressIndicator();
+}
+
+// =====================================================
+// Video renders
+// A render with `video` (instead of `image`) plays here: autoplays
+// muted and looping, like the GIFs, with a small control bar for
+// play/pause, scrubbing, time, and sound. Its `poster` is used for
+// the thumbnail, the blurred backdrop, and the frame shown while the
+// video loads. Magnifier and fit-width don't apply to video, so
+// their buttons hide while one is selected (see style.css).
+// =====================================================
+const ICON_PLAY = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>';
+const ICON_PAUSE = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="3.5" height="14" rx="1"></rect><rect x="14" y="5" width="3.5" height="14" rx="1"></rect></svg>';
+const ICON_SOUND_ON = '<svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6"></path><path d="M18 6.5a7.5 7.5 0 0 1 0 11"></path></svg>';
+const ICON_SOUND_OFF = '<svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><line x1="16" y1="9.5" x2="21" y2="14.5"></line><line x1="21" y1="9.5" x2="16" y2="14.5"></line></svg>';
+
+function formatTime(seconds) {
+  if (!isFinite(seconds) || seconds < 0) seconds = 0;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// Fully stops the outgoing video — a removed <video> can otherwise
+// keep downloading (or even keep playing its sound) in some browsers.
+function stopCurrentVideo() {
+  if (!currentVideo) return;
+  currentVideo.pause();
+  currentVideo.removeAttribute('src');
+  currentVideo.load();
+  currentVideo = null;
+  viewerEl.classList.remove('video-paused');
+}
+
+function toggleVideoPlay() {
+  if (!currentVideo) return;
+  if (currentVideo.paused) {
+    currentVideo.play().catch(() => {});
+  } else {
+    currentVideo.pause();
+  }
+}
+
+function showVideo(render, renderBackdrop) {
+  currentImage = null; // nothing for the magnifier to zoom into
+
+  const video = document.createElement('video');
+  video.className = 'render-main-image render-main-video';
+  video.muted = videoMuted;
+  video.defaultMuted = videoMuted;
+  video.loop = true;
+  video.autoplay = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  video.setAttribute('playsinline', '');
+  if (render.poster) video.poster = render.poster;
+  video.src = render.video;
+  video.setAttribute('aria-label', `${project.name} — render ${renderIndex + 1} (video)`);
+  currentVideo = video;
+
+  if (render.poster) {
+    renderBackdrop.style.backgroundImage = `url(${render.poster})`;
+    renderBackdrop.classList.add('active');
+  }
+
+  video.addEventListener('error', () => {
+    if (currentVideo !== video) return;
+    stopCurrentVideo();
+    viewerEl.classList.add('img-missing');
+    viewerEl.querySelectorAll('.render-backdrop, .render-main-image, .video-controls').forEach((el) => el.remove());
+    const missingLabel = document.createElement('span');
+    missingLabel.className = 'render-missing-label';
+    missingLabel.textContent = `${project.name} — render ${renderIndex + 1}`;
+    viewerEl.appendChild(missingLabel);
+  });
+
+  // ----- Control bar -----
+  const controls = document.createElement('div');
+  controls.className = 'video-controls';
+
+  const playBtn = document.createElement('button');
+  playBtn.type = 'button';
+  playBtn.className = 'video-btn video-play';
+
+  const seek = document.createElement('input');
+  seek.type = 'range';
+  seek.className = 'video-seek';
+  seek.min = '0';
+  seek.max = '1000';
+  seek.step = '1';
+  seek.value = '0';
+  seek.setAttribute('aria-label', 'Seek');
+
+  const time = document.createElement('span');
+  time.className = 'video-time';
+  time.textContent = '0:00 / 0:00';
+
+  const muteBtn = document.createElement('button');
+  muteBtn.type = 'button';
+  muteBtn.className = 'video-btn video-mute';
+
+  controls.append(playBtn, seek, time, muteBtn);
+
+  // Clicks, keys, and touches on the bar belong to the bar only — they
+  // must not also reach the viewer (fullscreen / swipe) or the page's
+  // arrow-key render navigation.
+  ['click', 'keydown', 'touchstart', 'touchmove', 'touchend'].forEach((type) => {
+    controls.addEventListener(type, (event) => event.stopPropagation(), { passive: type.startsWith('touch') });
+  });
+
+  function updatePlayButton() {
+    const paused = video.paused;
+    playBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
+    playBtn.setAttribute('aria-label', paused ? 'Play video' : 'Pause video');
+    viewerEl.classList.toggle('video-paused', paused);
+  }
+
+  function updateMuteButton() {
+    muteBtn.innerHTML = video.muted ? ICON_SOUND_OFF : ICON_SOUND_ON;
+    muteBtn.setAttribute('aria-label', video.muted ? 'Unmute video' : 'Mute video');
+  }
+
+  let seeking = false;
+  function updateTime() {
+    const duration = video.duration;
+    time.textContent = `${formatTime(video.currentTime)} / ${formatTime(duration)}`;
+    if (!seeking && isFinite(duration) && duration > 0) {
+      seek.value = String(Math.round((video.currentTime / duration) * 1000));
+    }
+    seek.style.setProperty('--seek-fill', `${(Number(seek.value) / 10).toFixed(1)}%`);
+  }
+
+  playBtn.addEventListener('click', toggleVideoPlay);
+
+  muteBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+    videoMuted = video.muted;
+    updateMuteButton();
+  });
+
+  seek.addEventListener('input', () => {
+    seeking = true;
+    if (isFinite(video.duration)) {
+      video.currentTime = (Number(seek.value) / 1000) * video.duration;
+    }
+    updateTime();
+  });
+  seek.addEventListener('change', () => { seeking = false; });
+
+  video.addEventListener('play', updatePlayButton);
+  video.addEventListener('pause', updatePlayButton);
+  video.addEventListener('timeupdate', updateTime);
+  video.addEventListener('loadedmetadata', updateTime);
+  video.addEventListener('volumechange', updateMuteButton);
+
+  updatePlayButton();
+  updateMuteButton();
+
+  viewerEl.appendChild(renderBackdrop);
+  viewerEl.appendChild(video);
+  viewerEl.appendChild(controls);
+
+  // If the browser refuses to autoplay with sound (most do until the
+  // visitor has interacted), fall back to muted rather than not playing.
+  const attempt = video.play();
+  if (attempt && attempt.catch) {
+    attempt.catch(() => {
+      if (currentVideo !== video) return;
+      video.muted = true;
+      videoMuted = true;
+      video.play().catch(() => updatePlayButton());
+    });
+  }
+}
+
+// =====================================================
+// Thumbnail type badges
+// A small pill in the thumbnail's bottom-right corner says what kind
+// of render it is: "▶ 0:06" for a video, "⟲ GIF" for a GIF. Still
+// images get no badge, so no badge = still image.
+// =====================================================
+const ICON_LOOP = '<svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2.5l3 3-3 3"></path><path d="M4 11.5v-1a5 5 0 0 1 5-5h11"></path><path d="M7 21.5l-3-3 3-3"></path><path d="M20 12.5v1a5 5 0 0 1-5 5H4"></path></svg>';
+
+// Video lengths, looked up once per file (only the small header at
+// the start of the file is downloaded) and remembered for this visit.
+const videoDurations = new Map();
+
+function getVideoDuration(src, callback) {
+  const known = videoDurations.get(src);
+  if (typeof known === 'number') {
+    callback(known);
+    return;
+  }
+  if (Array.isArray(known)) {
+    known.push(callback); // already being looked up
+    return;
+  }
+
+  const waiting = [callback];
+  videoDurations.set(src, waiting);
+
+  const probe = document.createElement('video');
+  probe.preload = 'metadata';
+  probe.muted = true;
+  probe.addEventListener('loadedmetadata', () => {
+    const duration = probe.duration;
+    videoDurations.set(src, duration);
+    waiting.forEach((cb) => cb(duration));
+    probe.removeAttribute('src');
+    probe.load();
+  });
+  probe.src = src;
+}
+
+function createTypeBadge(render) {
+  const isVideo = Boolean(render.video);
+  const isGif = !isVideo && /\.gif$/i.test(render.image || '');
+  if (!isVideo && !isGif) return null;
+
+  const badge = document.createElement('span');
+  badge.className = 'render-type-badge';
+  badge.setAttribute('aria-hidden', 'true');
+
+  const label = document.createElement('span');
+  label.className = 'render-type-label';
+
+  if (isVideo) {
+    badge.innerHTML = ICON_PLAY;
+    label.textContent = 'Video';
+    getVideoDuration(render.video, (duration) => {
+      if (isFinite(duration) && duration > 0) label.textContent = formatTime(duration);
+    });
+  } else {
+    badge.innerHTML = ICON_LOOP;
+    label.textContent = 'GIF';
+  }
+
+  badge.appendChild(label);
+  return badge;
 }
 
 // Zero-pads a 1-based render number for the indicator's labels.
@@ -158,6 +418,11 @@ function renderThumbnails() {
     // instead of every thumbnail in the stack playing at once. Renders
     // without a poster just use their own image, exactly as before.
     thumb.appendChild(createProjectImage(render.poster || render.image, `${project.name} — render ${index + 1}`, 'render-thumb-image'));
+    const badge = createTypeBadge(render);
+    if (badge) {
+      thumb.classList.add(render.video ? 'is-video' : 'is-gif');
+      thumb.appendChild(badge);
+    }
     thumb.addEventListener('click', () => showRender(index));
 
     if (isMobile) {
@@ -393,20 +658,73 @@ function setExpanded(expanded) {
 // keeps doing the exact same thing, this just gives the image itself
 // a second way to trigger it. Closing fullscreen stays on the ×
 // button and Escape, so that action isn't lost in the process.
-function handleViewerActivate() {  //delete this if touch doesn't work, along with the touch code
+// True when a pointer position lands on the render's actual pixels,
+// not the blurred letterbox around it (object-fit: contain makes the
+// <img> box bigger than the picture — same math as the magnifier).
+// With no loaded image (e.g. the "missing" placeholder) the whole
+// viewer counts, as before.
+function isPointOverImage(clientX, clientY) {
+  const media = currentImage || currentVideo;
+  const mediaWidth = media && (media.naturalWidth || media.videoWidth);
+  const mediaHeight = media && (media.naturalHeight || media.videoHeight);
+  if (!mediaWidth || !mediaHeight) return true;
+
+  const box = media.getBoundingClientRect();
+  const imageAspect = mediaWidth / mediaHeight;
+  let renderedWidth = box.width;
+  let renderedHeight = box.height;
+  if (imageAspect > box.width / box.height) {
+    renderedHeight = box.width / imageAspect;
+  } else {
+    renderedWidth = box.height * imageAspect;
+  }
+  const left = box.left + (box.width - renderedWidth) / 2;
+  const top = box.top + (box.height - renderedHeight) / 2;
+
+  return clientX >= left && clientX <= left + renderedWidth &&
+         clientY >= top && clientY <= top + renderedHeight;
+}
+
+function handleViewerActivate(event) {  //delete this if touch doesn't work, along with the touch code
   if (suppressNextViewerClick) {
     suppressNextViewerClick = false;
     return;
   }
 
+  // Only a click on the picture itself acts on it. A click on the
+  // area around it does nothing in the normal page view, and closes
+  // the fullscreen preview (same as the × button). Keyboard
+  // (Enter/Space) has no pointer position, so it still always works.
+  if (
+    event && event.type === 'click' &&
+    !isPointOverImage(event.clientX, event.clientY)
+  ) {
+    if (document.body.classList.contains('image-expanded')) {
+      setExpanded(false);
+    }
+    return;
+  }
+
   if (document.body.classList.contains('image-expanded')) {
-    setFitWidth(!document.body.classList.contains('fit-width'));
+    if (currentVideo) {
+      toggleVideoPlay(); // no fit-width for video — the click plays/pauses instead
+    } else {
+      setFitWidth(!document.body.classList.contains('fit-width'));
+    }
   } else {
     setExpanded(true);
   }
 }
 
 viewerEl.addEventListener('click', handleViewerActivate);
+
+// Pointer cursor only over the picture in the normal view, so the
+// hint matches what a click will actually do.
+viewerEl.addEventListener('mousemove', (event) => {
+  viewerEl.classList.toggle('off-image', !isPointOverImage(event.clientX, event.clientY));
+});
+
+viewerEl.addEventListener('mouseleave', () => viewerEl.classList.remove('off-image'));
 
 viewerEl.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' || event.key === ' ') {
