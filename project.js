@@ -283,72 +283,6 @@ function showVideo(render, renderBackdrop) {
   }
 }
 
-// =====================================================
-// Thumbnail type badges
-// A small pill in the thumbnail's bottom-right corner says what kind
-// of render it is: "▶ 0:06" for a video, "⟲ GIF" for a GIF. Still
-// images get no badge, so no badge = still image.
-// =====================================================
-const ICON_LOOP = '<svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2.5l3 3-3 3"></path><path d="M4 11.5v-1a5 5 0 0 1 5-5h11"></path><path d="M7 21.5l-3-3 3-3"></path><path d="M20 12.5v1a5 5 0 0 1-5 5H4"></path></svg>';
-
-// Video lengths, looked up once per file (only the small header at
-// the start of the file is downloaded) and remembered for this visit.
-const videoDurations = new Map();
-
-function getVideoDuration(src, callback) {
-  const known = videoDurations.get(src);
-  if (typeof known === 'number') {
-    callback(known);
-    return;
-  }
-  if (Array.isArray(known)) {
-    known.push(callback); // already being looked up
-    return;
-  }
-
-  const waiting = [callback];
-  videoDurations.set(src, waiting);
-
-  const probe = document.createElement('video');
-  probe.preload = 'metadata';
-  probe.muted = true;
-  probe.addEventListener('loadedmetadata', () => {
-    const duration = probe.duration;
-    videoDurations.set(src, duration);
-    waiting.forEach((cb) => cb(duration));
-    probe.removeAttribute('src');
-    probe.load();
-  });
-  probe.src = src;
-}
-
-function createTypeBadge(render) {
-  const isVideo = Boolean(render.video);
-  const isGif = !isVideo && /\.gif$/i.test(render.image || '');
-  if (!isVideo && !isGif) return null;
-
-  const badge = document.createElement('span');
-  badge.className = 'render-type-badge';
-  badge.setAttribute('aria-hidden', 'true');
-
-  const label = document.createElement('span');
-  label.className = 'render-type-label';
-
-  if (isVideo) {
-    badge.innerHTML = ICON_PLAY;
-    label.textContent = 'Video';
-    getVideoDuration(render.video, (duration) => {
-      if (isFinite(duration) && duration > 0) label.textContent = formatTime(duration);
-    });
-  } else {
-    badge.innerHTML = ICON_LOOP;
-    label.textContent = 'GIF';
-  }
-
-  badge.appendChild(label);
-  return badge;
-}
-
 // Zero-pads a 1-based render number for the indicator's labels.
 function padIndex(n) {
   return String(n).padStart(2, '0');
@@ -418,9 +352,12 @@ function renderThumbnails() {
     // instead of every thumbnail in the stack playing at once. Renders
     // without a poster just use their own image, exactly as before.
     thumb.appendChild(createProjectImage(render.poster || render.image, `${project.name} — render ${index + 1}`, 'render-thumb-image'));
-    const badge = createTypeBadge(render);
-    if (badge) {
-      thumb.classList.add(render.video ? 'is-video' : 'is-gif');
+    if (render.video) {
+      thumb.classList.add('is-video');
+      const badge = document.createElement('span');
+      badge.className = 'render-thumb-play';
+      badge.setAttribute('aria-hidden', 'true');
+      badge.innerHTML = ICON_PLAY;
       thumb.appendChild(badge);
     }
     thumb.addEventListener('click', () => showRender(index));
