@@ -13,7 +13,50 @@ const nextBtn = document.getElementById('carousel-next');
 
 let selectedIndex = 0;
 
+// Horizontal distance between neighbouring cards, in px. Also how far
+// the mouse has to be dragged to move the carousel by one project.
+const CARD_SPACING = 255;
+
+// Where a card sits, how big, and how visible, given how many places
+// it is from the centre. `offset` can be fractional while dragging
+// (e.g. 0.4 = 40% of the way to the next slot) — at whole numbers it
+// gives exactly the same result as before dragging existed.
+function getCardLayout(offset) {
+  const distance = Math.abs(offset);
+  let scale;
+  let opacity;
+  if (distance < 1) {
+    // Blend between the centre card's look and its neighbours'.
+    scale = 1.3 + (0.85 - 1.3) * distance;
+    opacity = 1 + (0.45 - 1) * distance;
+  } else {
+    scale = Math.max(0.6, 1 - distance * 0.15);
+    opacity = Math.max(0.25, 0.45 - (distance - 1) * 0.2);
+  }
+  return {
+    transform: `translate(-50%, -50%) translateX(${offset * CARD_SPACING}px) scale(${scale})`,
+    opacity: String(opacity),
+    zIndex: String(Math.round(100 - distance * 10))
+  };
+}
+
+// Same wrap-around as getCircularOffset (site.js), but allowing a
+// fractional position so cards can sit between slots mid-drag.
+function getFractionalOffset(index, position, total) {
+  let offset = (((index - position) % total) + total) % total;
+  if (offset > Math.floor(total / 2) + (total % 2 ? 0.5 : 0)) offset -= total;
+  return offset;
+}
+
+function applyCardLayout(card, offset) {
+  const layout = getCardLayout(offset);
+  card.style.transform = layout.transform;
+  card.style.opacity = layout.opacity;
+  card.style.zIndex = layout.zIndex;
+}
+
 function renderCarousel() {
+  cancelSettle();
   track.innerHTML = '';
 
   PROJECTS.forEach((project, index) => {
@@ -23,14 +66,10 @@ function renderCarousel() {
     const card = document.createElement('div');
     card.className = 'carousel-card';
     card.appendChild(createProjectImage(project.heroImage, project.name, 'carousel-card-image'));
+    const cardImg = card.querySelector('img');
+    if (cardImg) cardImg.draggable = false; // no browser "ghost image" when dragging
 
-    const translateX = offset * 255;
-    const scale = isSelected ? 1.3 : Math.max(0.6, 1 - Math.abs(offset) * 0.15);
-    const opacity = isSelected ? 1 : Math.max(0.25, 0.45 - (Math.abs(offset) - 1) * 0.2);
-
-    card.style.transform = `translate(-50%, -50%) translateX(${translateX}px) scale(${scale})`;
-    card.style.opacity = String(opacity);
-    card.style.zIndex = String(100 - Math.abs(offset));
+    applyCardLayout(card, offset);
 
     // Clicking the centered card goes to its project page.
     // Clicking a side card brings that project to the center instead.
@@ -287,38 +326,156 @@ function showNext() {
 prevBtn.addEventListener('click', showPrev);
 nextBtn.addEventListener('click', showNext);
 
-prevBtn.addEventListener('click', showPrev);
-nextBtn.addEventListener('click', showNext);
+// =====================================================
+// Drag (mouse and touch)
+// Drag the carousel left/right — with the mouse on the cards, or with
+// a finger anywhere on the landing area: the cards follow continuously,
+// then glide to the nearest project when released (a quick flick
+// carries on to the next one). A plain click/tap still works exactly as
+// before, and up/down swipes on touch screens still scroll the page.
+// =====================================================
+const landingEl = document.querySelector('.landing');
+const DRAG_THRESHOLD_PX = 6;   // movement before a press counts as a drag, not a click
+const SETTLE_MS = 380;         // glide time after letting go
+const FLICK_PROJECTION_MS = 160; // how far a fast flick "throws" the carousel
 
+let dragState = null;
+let settleFrame = null;
+let suppressNextClick = false;
 
-// Carousel touch fucnctons delete if don't work
+function cancelSettle() {
+  if (settleFrame) cancelAnimationFrame(settleFrame);
+  settleFrame = null;
+  track.classList.remove('is-dragging');
+}
 
-let touchStartX = 0;
-let touchStartY = 0;
+function positionCards(position) {
+  [...track.children].forEach((card, index) => {
+    applyCardLayout(card, getFractionalOffset(index, position, PROJECTS.length));
+  });
+}
 
-document.addEventListener('touchstart', (event) => {
-  touchStartX = event.changedTouches[0].clientX;
-  touchStartY = event.changedTouches[0].clientY;
-}, { passive: true });
+function wrapIndex(i) {
+  const n = PROJECTS.length;
+  return ((Math.round(i) % n) + n) % n;
+}
 
-document.addEventListener('touchend', (event) => {
-  const touchEndX = event.changedTouches[0].clientX;
-  const touchEndY = event.changedTouches[0].clientY;
+// Glides from a fractional position to the whole-number target, then
+// hands over to renderCarousel so the title, "More" link, and
+// background update exactly as they do for the arrows.
+function settleTo(from, target) {
+  cancelSettle();
+  const start = performance.now();
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = reducedMotion ? 0 : SETTLE_MS;
 
-  const deltaX = touchEndX - touchStartX;
-  const deltaY = touchEndY - touchStartY;
-
-  if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
-  if (Math.abs(deltaX) < 50) return;
-
-  if (deltaX < 0) {
-    showNext();
-  } else {
-    showPrev();
+  function tick(now) {
+    const t = duration ? Math.min((now - start) / duration, 1) : 1;
+    const eased = 1 - Math.pow(1 - t, 3); // ease-out
+    positionCards(from + (target - from) * eased);
+    if (t < 1) {
+      settleFrame = requestAnimationFrame(tick);
+    } else {
+      settleFrame = null;
+      track.classList.remove('is-dragging');
+      selectedIndex = wrapIndex(target);
+      renderCarousel();
+    }
   }
+  settleFrame = requestAnimationFrame(tick);
+}
+
+landingEl.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) return;
+  const isMouse = event.pointerType === 'mouse';
+  // Mouse: drag starts on the cards. Touch: anywhere on the landing
+  // area (as the old swipe did), except on buttons and links, which
+  // keep their normal tap.
+  if (isMouse && !track.contains(event.target)) return;
+  if (!isMouse && event.target.closest('button, a')) return;
+
+  dragState = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    startPosition: selectedIndex,
+    position: selectedIndex,
+    dragging: false,
+    lastX: event.clientX,
+    lastTime: performance.now(),
+    velocity: 0 // px per ms
+  };
 });
 
-// Carousel touch fucnctons delete if don't work
+landingEl.addEventListener('pointermove', (event) => {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const dx = event.clientX - dragState.startX;
+
+  if (!dragState.dragging) {
+    // A mostly-vertical movement is the page scrolling, not a drag.
+    if (Math.abs(event.clientY - dragState.startY) > Math.abs(dx) &&
+        Math.abs(event.clientY - dragState.startY) >= DRAG_THRESHOLD_PX) {
+      dragState = null;
+      return;
+    }
+    if (Math.abs(dx) < DRAG_THRESHOLD_PX) return;
+    dragState.dragging = true;
+    cancelSettle();
+    try {
+      landingEl.setPointerCapture(event.pointerId); // keep following even if the pointer leaves the carousel
+    } catch (e) {
+      // capture isn't essential — dragging still works without it
+    }
+    track.classList.add('is-dragging');
+  }
+
+  const now = performance.now();
+  const dt = now - dragState.lastTime;
+  if (dt > 0) {
+    // Smoothed so one jittery frame doesn't decide the flick.
+    dragState.velocity = 0.7 * ((event.clientX - dragState.lastX) / dt) + 0.3 * dragState.velocity;
+  }
+  dragState.lastX = event.clientX;
+  dragState.lastTime = now;
+
+  // Dragging left brings the next project in from the right.
+  dragState.position = dragState.startPosition - dx / CARD_SPACING;
+  positionCards(dragState.position);
+});
+
+function endDrag(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const state = dragState;
+  dragState = null;
+  if (!state.dragging) return; // a plain click — let it through untouched
+
+  suppressNextClick = true; // the release shouldn't also "click" a card
+  setTimeout(() => { suppressNextClick = false; }, 0);
+
+  // If the mouse stopped before letting go, there's no flick.
+  const idle = performance.now() - state.lastTime > 80;
+  const velocity = idle ? 0 : state.velocity;
+  const projected = state.position - (velocity * FLICK_PROJECTION_MS) / CARD_SPACING;
+  settleTo(state.position, Math.round(projected));
+}
+
+landingEl.addEventListener('pointerup', endDrag);
+landingEl.addEventListener('pointercancel', endDrag);
+
+// Swallow the click that follows a drag, before it reaches a card.
+track.addEventListener('click', (event) => {
+  if (suppressNextClick) {
+    event.stopPropagation();
+    event.preventDefault();
+    suppressNextClick = false;
+  }
+}, true);
+
+track.addEventListener('dragstart', (event) => event.preventDefault());
+
+
+// (The old touch swipe that lived here is replaced by the drag above,
+// which now handles touch too — see "Drag (mouse and touch)".)
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowLeft') showPrev();

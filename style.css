@@ -276,6 +276,8 @@ h1, h2, h3 {
    ===================================================== */
 .landing {
   position: relative;
+  /* Sideways swipes drag the carousel (carousel.js); up/down still scrolls */
+  touch-action: pan-y;
   min-height: calc(100vh - 73px);
   display: flex;
   align-items: center;
@@ -288,6 +290,13 @@ h1, h2, h3 {
   inset: 0;
   z-index: 0;
   overflow: hidden; /* safety net for the brief scale+translateX the glitch applies to the real image (see carousel.js) */
+  /* Soft fade at the bottom, so the characters dissolve into the page
+     instead of being cut off at the footer — reads as if they carry on
+     below. Fades to transparent, so it matches the page colour in both
+     light and dark mode. On the container (not each image), so it
+     covers every slide and stays put while the glitch moves the image. */
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 67%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 67%, transparent 100%);
 }
 
 /* The backdrop glitch (see triggerBackdropGlitch in carousel.js) is no
@@ -357,6 +366,20 @@ h1, h2, h3 {
   height: 680px;
   --card-width: 340px;
   --card-height: 495px;
+  cursor: grab; /* the carousel can be dragged with the mouse (see carousel.js) */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* While dragging (and gliding into place afterwards) the cards follow
+   the mouse directly, so their usual 0.4s transition is switched off. */
+.carousel-track.is-dragging,
+.carousel-track.is-dragging .carousel-card {
+  cursor: grabbing;
+}
+
+.carousel-track.is-dragging .carousel-card {
+  transition: none;
 }
 
 .carousel-card {
@@ -380,6 +403,10 @@ h1, h2, h3 {
 
 .carousel-arrow {
   flex-shrink: 0;
+  /* Above the cards (z-index up to 100), so on narrow screens a side
+     card can never sit on top of the arrow and swallow its tap. */
+  position: relative;
+  z-index: 101;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -430,9 +457,22 @@ main section + section {
 }
 
 .about-photo {
-  aspect-ratio: 1;
-  background: var(--color-surface);
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 485 / 575; /* matches images/about-photo.jpg (970 × 1150) */
+  object-fit: cover;
+  background: var(--color-surface); /* shows only while the photo loads */
   border-radius: 8px;
+}
+
+.about-text p + p {
+  margin-top: 1rem;
+}
+
+.about-tools {
+  color: var(--color-muted);
+  font-size: 0.95rem;
 }
 
 /* =====================================================
@@ -580,24 +620,29 @@ main section + section {
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.4s ease, opacity 0.4s ease;
-  -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
-  mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
 }
 
+/* The soft edge fade lives on the picture (not the whole thumbnail)
+   so the type badge in the corner stays readable. */
 .render-thumb-image {
   width: 100%;
   height: 100%;
   border-radius: 10px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, black 50%, transparent 95%);
 }
 
 /* The selected thumbnail drops the edge fade (full clarity) and
    gets a thin ring instead, so it reads clearly as "this one" in
    both the desktop coverflow and the mobile strip. */
 .render-thumb.selected {
-  -webkit-mask-image: none;
-  mask-image: none;
   outline: 2px solid rgb(253, 253, 253);
   outline-offset: 3px;
+}
+
+.render-thumb.selected .render-thumb-image {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* ---------- Main render (fills the entire stage) ----------
@@ -1502,28 +1547,42 @@ body.image-expanded .video-controls {
   border: none;
 }
 
-/* Thumbnail play badge */
-.render-thumb-play {
+/* Thumbnail type badge — "▶ 0:06" on videos, "⟲ GIF" on GIFs,
+   nothing on still images (see createTypeBadge in project.js). */
+.render-type-badge {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 34px;
-  height: 34px;
-  transform: translate(-50%, -50%);
+  right: 6px;
+  bottom: 6px;
+  z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
+  gap: 3px;
+  padding: 2px 7px 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   color: #f0f0f0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
 
-.render-thumb-play .icon {
-  width: 16px;
-  height: 16px;
-  margin-left: 2px; /* optically centre the triangle */
+.render-type-badge .icon {
+  width: 11px;
+  height: 11px;
   fill: currentColor;
+}
+
+.render-type-badge .icon-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Touch screens have no hover, so the bar is always shown there. */
