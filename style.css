@@ -399,6 +399,11 @@ h1, h2, h3 {
   width: 100%;
   height: 100%;
   border-radius: 12px;
+  /* Bottom fade, so each character dissolves downward instead of being
+     cut off — same idea as the landing background. Sits on the picture,
+     so it combines with the card's soft edge fade above. */
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
 }
 
 .carousel-arrow {
