@@ -750,10 +750,12 @@ init();
 // =====================================================
 // Touch / Swipe navigation
 //
-// Swipe Up   → next render
-// Swipe Down → previous render
+// Swipe Left  → next render
+// Swipe Right → previous render
+// (like a photo gallery; up/down swipes are left alone so the page —
+// or a fit-to-width image in fullscreen — still scrolls normally)
 //
-// Single-finger vertical swipes are handled.
+// Single-finger horizontal swipes are handled.
 // Multi-touch gestures (pinch/zoom) are ignored.
 // =====================================================
 
@@ -808,12 +810,12 @@ viewerEl.addEventListener(
     const horizontalDistance = Math.abs(deltaX);
     const verticalDistance = Math.abs(deltaY);
 
-    // Once the movement is clearly vertical,
-    // take control away from normal page scrolling.
+    // Once the movement is clearly horizontal, take it over so the
+    // browser doesn't also treat it as a back/forward page swipe.
     if (
       !swipeLocked &&
-      verticalDistance >= 10 &&
-      verticalDistance >= horizontalDistance * 1.2
+      horizontalDistance >= 10 &&
+      horizontalDistance >= verticalDistance * 1.2
     ) {
       swipeLocked = true;
     }
@@ -858,19 +860,19 @@ viewerEl.addEventListener(
     if (elapsed > 600) return;
 
     // Must move far enough to be intentional.
-    if (verticalDistance < 50) return;
+    if (horizontalDistance < 50) return;
 
-    // Vertical movement must clearly dominate.
-    if (verticalDistance < horizontalDistance * 1.2) return;
+    // Horizontal movement must clearly dominate.
+    if (horizontalDistance < verticalDistance * 1.2) return;
 
     // Prevent the swipe from also triggering fullscreen.
     suppressNextViewerClick = true;
 
-    if (deltaY < 0) {
-      // Swipe Up → next render
+    if (deltaX < 0) {
+      // Swipe Left → next render
       showRender(renderIndex + 1);
     } else {
-      // Swipe Down → previous render
+      // Swipe Right → previous render
       showRender(renderIndex - 1);
     }
   },
