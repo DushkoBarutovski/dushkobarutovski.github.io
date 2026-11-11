@@ -88,7 +88,20 @@ function renderCarousel() {
 
   const current = PROJECTS[selectedIndex];
   updateTitle(current.name);
-  viewLink.href = `project.html?id=${current.id}`;
+  // "More" only works for projects that can be opened — for one marked
+  // `openable: false` in data.js it's dimmed and leads nowhere, the
+  // same as clicking that project's card or pressing Enter.
+  const canOpen = current.openable !== false;
+  viewLink.classList.toggle('is-disabled', !canOpen);
+  if (canOpen) {
+    viewLink.href = `project.html?id=${current.id}`;
+    viewLink.removeAttribute('aria-disabled');
+    viewLink.removeAttribute('tabindex');
+  } else {
+    viewLink.removeAttribute('href'); // a link without an address can't be followed
+    viewLink.setAttribute('aria-disabled', 'true');
+    viewLink.setAttribute('tabindex', '-1');
+  }
   updateBackdrop(current);
 }
 

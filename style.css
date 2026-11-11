@@ -438,6 +438,17 @@ h1, h2, h3 {
   border-color: var(--color-text);
 }
 
+/* Project that can't be opened yet (openable: false in data.js) */
+.view-project-btn.is-disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.view-project-btn.is-disabled:hover {
+  background: none;
+  border-color: var(--color-border);
+}
+
 /* =====================================================
    SECTION SPACING
    A top border appears between two stacked sections, but
